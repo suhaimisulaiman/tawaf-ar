@@ -127,6 +127,125 @@
             font-style: italic;
             color: #CCCCCC;
         }
+
+        /* Cognitive & Gestalt Principles */
+        
+        /* 1. PROXIMITY - Group related elements together */
+        .control-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            justify-content: center;
+        }
+        
+        /* 2. SIMILARITY - Use consistent colors and shapes */
+        .btn-primary { background: #2196F3; }
+        .btn-secondary { background: #757575; }
+        .btn-success { background: #4CAF50; }
+        .btn-warning { background: #FF9800; }
+        .btn-danger { background: #F44336; }
+        .btn-istilam { background: #9C27B0; }
+        
+        /* 3. CONTINUITY - Smooth transitions and flow */
+        .smooth-transition {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* 4. CLOSURE - Complete visual patterns */
+        .progress-container {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+        
+        /* 5. FIGURE-GROUND - Clear hierarchy */
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        /* 6. COMMON FATE - Elements moving together */
+        .corner-group {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* 7. PRAGNANZ - Simple, clear shapes */
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-active { background: #4CAF50; }
+        .status-paused { background: #FF9800; }
+        .status-complete { background: #2196F3; }
+        
+        /* 8. COGNITIVE LOAD REDUCTION */
+        .info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 9. VISUAL HIERARCHY */
+        .primary-text { font-size: 18px; font-weight: bold; }
+        .secondary-text { font-size: 14px; opacity: 0.8; }
+        .tertiary-text { font-size: 12px; opacity: 0.6; }
+        
+        /* 10. AFFORDANCE - Clear interactive elements */
+        .interactive-element {
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .interactive-element:hover {
+            border-color: #2196F3;
+            transform: scale(1.05);
+        }
+        
+        /* 11. MENTAL MODEL - Intuitive layout */
+        .tawaf-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .flow-arrow {
+            font-size: 24px;
+            color: #2196F3;
+            margin: 0 10px;
+        }
+        
+        /* 12. CHUNKING - Group information logically */
+        .info-chunk {
+            border-left: 4px solid #2196F3;
+            padding-left: 15px;
+            margin: 10px 0;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 0 5px 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -134,45 +253,95 @@
     <div class="status" id="status">Loading...</div>
     
     <!-- Main Menu -->
-    <div class="ui-overlay">
-        <div class="main-menu" id="mainMenu">
-            <h1>🕋 Tawaf AR Trainer</h1>
-            <p>Point camera at hiro marker to see Kaaba and begin Tawaf training</p>
+    <div id="mainMenu" class="main-content" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; text-align: center; z-index: 1000;">
+        <h1 class="primary-text" style="color: #2196F3; margin-bottom: 20px;">🕋 Tawaf AR Trainer</h1>
+        
+        <div class="info-card">
+            <div class="primary-text">Islamic Tawaf Training</div>
+            <div class="secondary-text">Learn the sacred ritual of Tawaf around the Kaaba</div>
         </div>
         
-        <!-- Tawaf Training UI -->
-        <div class="tawaf-ui" id="tawafUI">
-            <div class="corner-info" id="cornerInfo">Point camera at Kaaba to start</div>
-            <div class="arabic-text" id="arabicText">Ready to begin Tawaf training</div>
-            <div class="translation-text" id="translationText">Ready to begin Tawaf training</div>
-            
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+        <div class="info-chunk">
+            <div class="secondary-text">📱 Point camera at hiro marker to begin</div>
+            <div class="tertiary-text">7 rounds • 4 corners • AR guidance</div>
+        </div>
+        
+        <div class="tawaf-flow">
+            <div class="flow-step">
+                <div class="status-indicator status-active"></div>
+                <div class="secondary-text">Start</div>
             </div>
-            <div>
-                <span id="roundText">Round: 0/7</span> | 
-                <span id="cornerText">Corner: 0/4</span>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="status-indicator status-paused"></div>
+                <div class="secondary-text">Tawaf</div>
             </div>
-            <div style="margin-top: 10px;">
-                <button class="btn" id="startBtn" onclick="startTawaf()">Start Tawaf</button>
-                <button class="btn btn-secondary" id="nextBtn" onclick="nextCorner()" style="display: none;">Next Corner</button>
-                <button class="btn btn-warning" id="pauseBtn" onclick="pauseTawaf()" style="display: none;">Pause</button>
-                <button class="btn btn-secondary" onclick="resetTawaf()">Reset</button>
-                <button class="btn btn-secondary" onclick="showMainMenu()">Menu</button>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="status-indicator status-complete"></div>
+                <div class="secondary-text">Complete</div>
             </div>
-            
-            <!-- Istilam Button (for Black Stone) -->
-            <div style="margin-top: 10px;">
-                <button class="btn" id="istilamBtn" onclick="performIstilam()" style="display: none; background: #9C27B0;">
-                    🖐️ Perform Istilam (Wave to Black Stone)
-                </button>
+        </div>
+        
+        <div class="control-group">
+            <button class="btn btn-primary interactive-element smooth-transition" onclick="showTawafUI()">
+                🚀 Start Training
+            </button>
+        </div>
+    </div>
+    
+    <!-- Tawaf Training UI -->
+    <div id="tawafUI" class="main-content" style="position: fixed; top: 20px; left: 20px; right: 20px; padding: 20px; z-index: 1000; display: none;">
+        <!-- Status Bar with Visual Hierarchy -->
+        <div class="info-chunk">
+            <div class="primary-text" id="cornerInfo">Point camera at Kaaba to start</div>
+            <div class="secondary-text" id="status">Ready to begin Tawaf training</div>
+        </div>
+        
+        <!-- Progress Information with Chunking -->
+        <div class="control-group">
+            <div class="flow-step">
+                <div class="status-indicator status-active"></div>
+                <div class="secondary-text" id="roundText">Round: 0/7</div>
             </div>
-            
-            <!-- Smart Features Info -->
-            <div style="margin-top: 10px; font-size: 12px; opacity: 0.8;">
-                <div>💡 Smart Features: Auto-pause • Swipe to advance • Camera hints • Istilam</div>
-                <div>👆 Swipe right to advance corners • 🖐️ Perform Istilam at Black Stone</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="status-indicator status-paused"></div>
+                <div class="secondary-text" id="cornerText">Corner: 0/4</div>
             </div>
+        </div>
+        
+        <!-- Progress Bar with Closure -->
+        <div class="progress-container smooth-transition">
+            <div id="progressFill" style="height: 8px; background: linear-gradient(90deg, #4CAF50, #2196F3); width: 0%; transition: width 0.5s ease;"></div>
+        </div>
+        
+        <!-- Prayer Display with Figure-Ground -->
+        <div class="info-card" style="margin: 15px 0;">
+            <div class="arabic-text" id="arabicText" style="font-size: 16px; margin-bottom: 10px;">Ready to begin Tawaf training</div>
+            <div class="translation-text" id="translationText" style="font-size: 14px; opacity: 0.9;">Ready to begin Tawaf training</div>
+        </div>
+        
+        <!-- Control Buttons with Proximity and Similarity -->
+        <div class="control-group">
+            <button class="btn btn-primary interactive-element smooth-transition" id="startBtn" onclick="startTawaf()">Start Tawaf</button>
+            <button class="btn btn-success interactive-element smooth-transition" id="nextBtn" onclick="nextCorner()" style="display: none;">Next Corner</button>
+            <button class="btn btn-warning interactive-element smooth-transition" id="pauseBtn" onclick="pauseTawaf()" style="display: none;">Pause</button>
+            <button class="btn btn-secondary interactive-element smooth-transition" onclick="resetTawaf()">Reset</button>
+            <button class="btn btn-secondary interactive-element smooth-transition" onclick="showMainMenu()">Menu</button>
+        </div>
+        
+        <!-- Istilam Button with Affordance -->
+        <div class="control-group">
+            <button class="btn btn-istilam interactive-element smooth-transition" id="istilamBtn" onclick="performIstilam()" style="display: none;">
+                🖐️ Perform Istilam (Wave to Black Stone)
+            </button>
+        </div>
+        
+        <!-- Smart Features Info with Visual Hierarchy -->
+        <div class="info-chunk">
+            <div class="secondary-text">💡 Smart Features: Auto-pause • Swipe to advance • Camera hints • Istilam</div>
+            <div class="tertiary-text">👆 Swipe right to advance corners • 🖐️ Perform Istilam at Black Stone</div>
         </div>
     </div>
     
@@ -559,8 +728,17 @@
             tawafUI.style.display = 'none';
             resetTawaf();
         }
+
+        // Show Tawaf UI
+        function showTawafUI() {
+            mainMenu.style.display = 'none';
+            tawafUI.style.display = 'block';
+            updateTawafUI(); // Ensure Tawaf UI is updated
+            highlightCurrentCorner(); // Highlight the first corner
+            updateStatus('Tawaf training started!');
+        }
         
-        // Update Tawaf UI
+        // Update Tawaf UI with Cognitive & Gestalt Principles
         function updateTawafUI() {
             const cornerInfo = document.getElementById('cornerInfo');
             const arabicText = document.getElementById('arabicText');
@@ -575,15 +753,30 @@
             
             if (isTawafActive) {
                 const corner = corners[currentCorner];
-                cornerInfo.textContent = corner.name;
+                
+                // Apply cognitive principles
+                updateVisualState();
+                updateMentalModel();
+                animateCornerGroup();
+                updateInformationChunks();
+                
+                // Update prayer text with visual hierarchy
                 arabicText.textContent = corner.prayer;
                 translationText.textContent = corner.translation;
                 
+                // Button states with affordance
                 startBtn.style.display = 'none';
                 nextBtn.style.display = 'inline-block';
                 pauseBtn.style.display = 'inline-block';
                 istilamBtn.style.display = corner.requiresIstilam ? 'inline-block' : 'none';
+                
+                // Apply smooth transitions
+                startBtn.className = 'btn btn-primary interactive-element smooth-transition';
+                nextBtn.className = 'btn btn-success interactive-element smooth-transition';
+                pauseBtn.className = 'btn btn-warning interactive-element smooth-transition';
+                istilamBtn.className = 'btn btn-istilam interactive-element smooth-transition';
             } else {
+                // Reset to initial state
                 cornerInfo.textContent = 'Point camera at Kaaba to start';
                 arabicText.textContent = 'Ready to begin Tawaf training';
                 translationText.textContent = 'Ready to begin Tawaf training';
@@ -592,12 +785,17 @@
                 nextBtn.style.display = 'none';
                 pauseBtn.style.display = 'none';
                 istilamBtn.style.display = 'none';
+                
+                // Reset visual state
+                updateVisualState();
+                updateMentalModel();
             }
             
+            // Update progress with visual feedback
             roundText.textContent = `Round: ${currentRound}/7`;
             cornerText.textContent = `Corner: ${currentCorner + 1}/4`;
             
-            // Update progress bar
+            // Progress bar with smooth animation
             const totalSteps = 7 * 4; // 7 rounds * 4 corners
             const currentStep = (currentRound - 1) * 4 + currentCorner;
             const progress = (currentStep / totalSteps) * 100;
@@ -685,6 +883,88 @@
             }
         }
         
+        // Cognitive Load Reduction & Mental Model Improvements
+        
+        // Visual feedback for current state
+        function updateVisualState() {
+            const statusIndicator = document.querySelector('.status-indicator');
+            const roundText = document.getElementById('roundText');
+            const cornerText = document.getElementById('cornerText');
+            
+            if (isTawafActive) {
+                if (isPaused) {
+                    statusIndicator.className = 'status-indicator status-paused';
+                    statusIndicator.style.background = '#FF9800';
+                } else {
+                    statusIndicator.className = 'status-indicator status-active';
+                    statusIndicator.style.background = '#4CAF50';
+                }
+            } else {
+                statusIndicator.className = 'status-indicator status-complete';
+                statusIndicator.style.background = '#2196F3';
+            }
+            
+            // Update text with visual hierarchy
+            if (roundText) roundText.className = 'secondary-text';
+            if (cornerText) cornerText.className = 'secondary-text';
+        }
+        
+        // Simplified mental model - show only relevant information
+        function updateMentalModel() {
+            const corner = corners[currentCorner];
+            const cornerInfo = document.getElementById('cornerInfo');
+            const status = document.getElementById('status');
+            
+            if (isTawafActive) {
+                // Show current action needed
+                if (corner.requiresIstilam) {
+                    cornerInfo.textContent = `🖐️ ${corner.name} - Perform Istilam`;
+                    status.textContent = 'Wave towards Black Stone to show respect';
+                } else {
+                    cornerInfo.textContent = `📍 ${corner.name}`;
+                    status.textContent = 'Recite the prayer and proceed to next corner';
+                }
+            } else {
+                cornerInfo.textContent = 'Point camera at Kaaba to start';
+                status.textContent = 'Ready to begin Tawaf training';
+            }
+        }
+        
+        // Gestalt Principle: Common Fate - animate related elements together
+        function animateCornerGroup() {
+            const currentCornerElement = document.getElementById(`corner${currentCorner}`);
+            if (currentCornerElement) {
+                currentCornerElement.classList.add('corner-group');
+                
+                // Remove animation from other corners
+                for (let i = 0; i < 4; i++) {
+                    if (i !== currentCorner) {
+                        const corner = document.getElementById(`corner${i}`);
+                        if (corner) corner.classList.remove('corner-group');
+                    }
+                }
+            }
+        }
+        
+        // Cognitive Principle: Chunking - group information logically
+        function updateInformationChunks() {
+            const prayerCard = document.querySelector('.info-card');
+            if (prayerCard && isTawafActive) {
+                const corner = corners[currentCorner];
+                
+                // Add visual chunking with borders
+                prayerCard.style.borderLeft = '4px solid #2196F3';
+                prayerCard.style.borderRadius = '0 10px 10px 0';
+                
+                // Show chunked information
+                const arabicText = document.getElementById('arabicText');
+                const translationText = document.getElementById('translationText');
+                
+                if (arabicText) arabicText.className = 'arabic-text primary-text';
+                if (translationText) translationText.className = 'translation-text secondary-text';
+            }
+        }
+        
         // Setup marker events
         document.addEventListener('DOMContentLoaded', function() {
             updateStatus('App loaded - point camera at hiro marker');
@@ -693,15 +973,13 @@
             if (marker) {
                 marker.addEventListener('markerFound', function() {
                     updateStatus('🎯 Hiro marker detected! Tawaf training ready');
-                    mainMenu.style.display = 'none';
-                    tawafUI.style.display = 'block';
+                    // showTawafUI(); // This will be handled by the new main menu
                     handleMarkerFound(); // Auto-resume when marker is found
                 });
                 
                 marker.addEventListener('markerLost', function() {
                     updateStatus('Searching for hiro marker...');
-                    mainMenu.style.display = 'block';
-                    tawafUI.style.display = 'none';
+                    // showMainMenu(); // This will be handled by the new main menu
                     handleMarkerLost(); // Auto-pause when marker is lost
                 });
             }
