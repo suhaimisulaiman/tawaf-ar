@@ -1,0 +1,23 @@
+{
+  "name": "tawaf-ar-trainer",
+  "version": "1.0.0",
+  "description": "Web-based AR training tool for Tawaf ritual during Hajj",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "serve": "npx http-server -p 8000 -c-1",
+    "deploy-netlify": "echo 'Drag and drop this folder to netlify.com'",
+    "deploy-vercel": "echo 'Push to GitHub and import to vercel.com'"
+  },
+  "keywords": ["ar", "hajj", "tawaf", "training", "web-ar", "ar.js", "a-frame"],
+  "author": "Tawaf AR Team",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/tawaf-ar-trainer.git"
+  },
+  "homepage": "https://your-username.github.io/tawaf-ar-trainer"
+} 

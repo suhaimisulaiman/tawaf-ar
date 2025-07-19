@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tawaf AR Trainer - Hajj Pilgrimage Education</title>
+    
+    <!-- AR.js - More reliable loading -->
+    <script>
+        // Try to load AR.js from multiple sources
+        function loadARJS() {
+            const sources = [
+                'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@master/aframe/build/aframe-ar.min.js',
+                'https://unpkg.com/aframe-ar@1.4.2/dist/aframe-ar.min.js',
+                'https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.min.js'
+            ];
+            
+            let loaded = false;
+            
+            sources.forEach((src, index) => {
+                if (!loaded) {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = function() {
+                        console.log('AR.js loaded successfully from:', src);
+                        loaded = true;
+                        initializeAR();
+                    };
+                    script.onerror = function() {
+                        console.log('Failed to load AR.js from:', src);
+                        if (index === sources.length - 1) {
+                            // All sources failed, show error
+                            document.getElementById('debugInfo').textContent = 'AR.js failed to load. Using fallback mode.';
+                            document.getElementById('debugInfo').style.color = '#FF9800';
+                            initializeFallback();
+                        }
+                    };
+                    document.head.appendChild(script);
+                }
+            });
+        }
+        
+        // Initialize AR when library loads
+        function initializeAR() {
+            console.log('AR.js initialized successfully');
+            document.getElementById('debugInfo').textContent = 'Camera Status: ✅ Working | AR.js: ✅ Loaded';
+            document.getElementById('debugInfo').style.color = '#4CAF50';
+            
+            // Update status
+            updateStatus('AR.js loaded successfully', 'status-tracking');
+            
+            // Show AR scene
+            const arScene = document.getElementById('arScene');
+            if (arScene) {
+                arScene.style.display = 'block';
+            }
+            
+            // Setup AR events
+            setTimeout(setupAREvents, 1000);
+        }
+        
+        // Fallback mode without AR.js
+        function initializeFallback() {
+            console.log('Using fallback mode without AR.js');
+            updateStatus('Using fallback mode - AR.js not available', 'status-error');
+            
+            // Create a simple camera view
+            const video = document.createElement('video');
+            video.id = 'cameraFeed';
+            video.autoplay = true;
+            video.playsinline = true;
+            video.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                z-index: 1;
+            `;
+            document.body.insertBefore(video, document.body.firstChild);
+            
+            // Start camera
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    console.log('Camera started in fallback mode');
+                    updateStatus('Camera working (fallback mode)', 'status-searching');
+                })
+                .catch(err => {
+                    console.error('Camera error in fallback mode:', err);
+                    updateStatus('Camera access denied', 'status-error');
+                });
+        }
+        
+        // Load AR.js when page loads
+        window.addEventListener('load', function() {
+            // First check camera availability
+            checkCameraStatus();
+            // Then load AR.js
+            loadARJS();
+        });
+    </script>
+    
+    <!-- Custom styles -->
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+        }
+        
+        /* Make sure camera feed is visible */
+        .a-canvas {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1 !important;
+        }
+        
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .ui-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .main-menu {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .tawaf-ui {
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: none;
+        }
+        
+        .settings-panel {
+            top: 20px;
+            right: 20px;
+            display: none;
+            min-width: 250px;
+        }
+        
+        .help-panel {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #FF9800, #F57C00);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .corner-indicator {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 0, 0.8);
+            border-radius: 50%;
+            border: 3px solid #FFD700;
+            animation: pulse 2s infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .instruction-text {
+            font-size: 18px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .round-text {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .slider {
+            width: 150px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        .ar-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            pointer-events: none;
+        }
+        
+        .status-tracking {
+            color: #4CAF50;
+        }
+        
+        .status-searching {
+            color: #FF9800;
+        }
+        
+        .status-error {
+            color: #F44336;
+        }
+        
+        /* Debug info */
+        .debug-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 2000;
+            pointer-events: none;
+        }
+        
+        /* Camera feed debug */
+        .camera-debug {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            border: 2px solid red;
+            z-index: 999;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- AR Status Indicator -->
+    <div class="ar-status" id="arStatus">
+        <span id="statusText">Loading AR components...</span>
+    </div>
+
+    <!-- Debug Info -->
+    <div class="debug-info" id="debugInfo">
+        Loading AR.js...
+    </div>
+
+    <!-- Main Menu -->
+    <div class="ui-overlay">
+        <div class="ui-panel main-menu" id="mainMenu">
+            <h1>🕋 Tawaf AR Trainer</h1>
+            <p>Learn the Tawaf ritual through Augmented Reality</p>
+            <button class="btn" onclick="startTawaf()">Start Tawaf Training</button>
+            <button class="btn btn-secondary" onclick="showSettings()">Settings</button>
+            <button class="btn btn-secondary" onclick="showHelp()">Help</button>
+            <button class="btn btn-warning" onclick="toggleDebug()">Toggle Debug</button>
+            <button class="btn btn-secondary" onclick="testImageTracking()">Test Tracking</button>
+            <p style="font-size: 12px; margin-top: 20px;">
+                Point your camera at a Kaaba image to begin
+            </p>
+        </div>
+
+        <!-- Tawaf UI -->
+        <div class="ui-panel tawaf-ui" id="tawafUI">
+            <div class="round-text" id="roundText">Round: 0/7</div>
+            <div class="instruction-text" id="instructionText">Point camera at Kaaba image to start</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn" id="startBtn" onclick="startTawafRoutine()">Start</button>
+                <button class="btn btn-warning" id="pauseBtn" onclick="pauseTawaf()" style="display: none;">Pause</button>
+                <button class="btn btn-secondary" onclick="resetTawaf()">Reset</button>
+                <button class="btn btn-secondary" onclick="showMainMenu()">Menu</button>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="ui-panel settings-panel" id="settingsPanel">
+            <button class="close-btn" onclick="hideSettings()">&times;</button>
+            <h3>Settings</h3>
+            <div class="settings-row">
+                <span>Master Volume:</span>
+                <input type="range" class="slider" id="masterVolume" min="0" max="1" step="0.1" value="1">
+            </div>
+            <div class="settings-row">
+                <span>Prayer Volume:</span>
+                <input type="range" class="slider" id="prayerVolume" min="0" max="1" step="0.1" value="0.8">
+            </div>
+            <div class="settings-row">
+                <span>Guidance Volume:</span>
+                <input type="range" class="slider" id="guidanceVolume" min="0" max="1" step="0.1" value="0.6">
+            </div>
+            <div class="settings-row">
+                <span>Language:</span>
+                <select id="languageSelect" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 5px; border-radius: 5px;">
+                    <option value="en">English</option>
+                    <option value="ar">العربية</option>
+                    <option value="ms">Bahasa Melayu</option>
+                </select>
+            </div>
+            <div class="settings-row">
+                <span>Subtitles:</span>
+                <input type="checkbox" id="subtitlesToggle" checked>
+            </div>
+            <button class="btn" onclick="saveSettings()">Save Settings</button>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="ui-panel help-panel" id="helpPanel">
+            <button class="close-btn" onclick="hideHelp()">&times;</button>
+            <h3>How to Use Tawaf AR Trainer</h3>
+            <div style="text-align: left;">
+                <h4>Getting Started:</h4>
+                <ol>
+                    <li>Print or display a Kaaba image on your screen</li>
+                    <li>Point your camera at the image</li>
+                    <li>Tap "Start Tawaf Training" when the AR Kaaba appears</li>
+                    <li>Follow the audio and visual guidance</li>
+                </ol>
+                
+                <h4>Tawaf Ritual:</h4>
+                <ul>
+                    <li>Complete 7 rounds around the Kaaba</li>
+                    <li>Start from the Black Stone corner</li>
+                    <li>Move counterclockwise</li>
+                    <li>Recite prayers at each corner</li>
+                </ul>
+                
+                <h4>Controls:</h4>
+                <ul>
+                    <li>Start/Pause: Control the training session</li>
+                    <li>Reset: Start over from the beginning</li>
+                    <li>Settings: Adjust audio and language</li>
+                </ul>
+                
+                <h4>Tips:</h4>
+                <ul>
+                    <li>Ensure good lighting for better tracking</li>
+                    <li>Keep the Kaaba image visible</li>
+                    <li>Move slowly and deliberately</li>
+                    <li>Use headphones for better audio experience</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- A-Frame Scene (will be initialized after AR.js loads) -->
+    <div id="arScene" style="display: none;">
+        <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+            
+            <!-- Kaaba 3D Model - Using hiro marker for now -->
+            <a-marker preset="hiro" id="kaabaMarker">
+                <a-box position="0 0.5 0" 
+                       rotation="0 0 0" 
+                       width="1" 
+                       height="1" 
+                       depth="1" 
+                       color="#8B4513"
+                       material="shader: flat">
+                    <!-- Black Stone corner indicator -->
+                    <a-sphere position="0.5 0.5 0.5" 
+                              radius="0.1" 
+                              color="#000000"
+                              class="corner-marker"
+                              data-corner="0">
+                    </a-sphere>
+                    
+                    <!-- Yemen corner indicator -->
+                    <a-sphere position="0.5 0.5 -0.5" 
+                              radius="0.1" 
+                              color="#FFD700"
+                              class="corner-marker"
+                              data-corner="1">
+                    </a-sphere>
+                    
+                    <!-- Shami corner indicator -->
+                    <a-sphere position="-0.5 0.5 -0.5" 
+                              radius="0.1" 
+                              color="#FFD700"
+                              class="corner-marker"
+                              data-corner="2">
+                    </a-sphere>
+                    
+                    <!-- Iraqi corner indicator -->
+                    <a-sphere position="-0.5 0.5 0.5" 
+                              radius="0.1" 
+                              color="#FFD700"
+                              class="corner-marker"
+                              data-corner="3">
+                    </a-sphere>
+                </a-box>
+                
+                <!-- Tawaf path -->
+                <a-ring position="0 0.01 0" 
+                        radius="2" 
+                        radius-inner="1.5" 
+                        color="#FFFFFF" 
+                        opacity="0.3"
+                        rotation="-90 0 0">
+                </a-ring>
+                
+                <!-- Direction arrows -->
+                <a-entity id="directionArrows" visible="false">
+                    <a-cone position="0 0.1 1.5" 
+                            rotation="0 0 0" 
+                            radius-bottom="0.2" 
+                            height="0.4" 
+                            color="#4CAF50">
+                    </a-cone>
+                </a-entity>
+            </a-marker>
+            
+            <!-- Camera -->
+            <a-entity camera></a-entity>
+            
+            <!-- Audio elements -->
+            <a-entity id="audioContainer">
+                <audio id="prayerAudio" preload="auto"></audio>
+                <audio id="guidanceAudio" preload="auto"></audio>
+            </a-entity>
+        </a-scene>
+    </div>
+
+    <!-- JavaScript for Tawaf Logic -->
+    <script>
+        // Tawaf state
+        let currentRound = 0;
+        let currentCorner = 0;
+        let isTawafActive = false;
+        let tawafInterval;
+        let debugMode = false;
+        
+        // Audio elements
+        const prayerAudio = document.getElementById('prayerAudio');
+        const guidanceAudio = document.getElementById('guidanceAudio');
+        
+        // UI elements
+        const mainMenu = document.getElementById('mainMenu');
+        const tawafUI = document.getElementById('tawafUI');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const helpPanel = document.getElementById('helpPanel');
+        const roundText = document.getElementById('roundText');
+        const instructionText = document.getElementById('instructionText');
+        const progressFill = document.getElementById('progressFill');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const arStatus = document.getElementById('arStatus');
+        const statusText = document.getElementById('statusText');
+        const debugInfo = document.getElementById('debugInfo');
+        
+        // Corner names
+        const cornerNames = {
+            en: ['Black Stone', 'Yemen', 'Shami', 'Iraqi'],
+            ar: ['الحجر الأسود', 'الركن اليماني', 'الركن الشامي', 'الركن العراقي'],
+            ms: ['Hajar Aswad', 'Rukun Yamani', 'Rukun Shami', 'Rukun Iraqi']
+        };
+        
+        // Instructions
+        const instructions = {
+            en: {
+                start: 'Point camera at Kaaba image to start',
+                goToCorner: 'Go to {corner} corner',
+                complete: 'Tawaf completed! Congratulations!',
+                pause: 'Tawaf paused. Tap Resume to continue.'
+            },
+            ar: {
+                start: 'وجه الكاميرا نحو صورة الكعبة للبدء',
+                goToCorner: 'اذهب إلى {corner}',
+                complete: 'تم الطواف! تهانينا!',
+                pause: 'تم إيقاف الطواف. اضغط استئناف للمتابعة.'
+            },
+            ms: {
+                start: 'Arahkan kamera ke gambar Kaabah untuk bermula',
+                goToCorner: 'Pergi ke sudut {corner}',
+                complete: 'Tawaf selesai! Tahniah!',
+                pause: 'Tawaf dijeda. Tekan Sambung untuk meneruskan.'
+            }
+        };
+        
+        let currentLanguage = 'en';
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            updateUI();
+        });
+        
+        function checkCameraStatus() {
+            // Check if camera is available
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(function(stream) {
+                        console.log('Camera is working');
+                        // Don't update debug info here as it will be updated by AR.js loading
+                    })
+                    .catch(function(error) {
+                        debugInfo.textContent = 'Camera Status: ❌ ' + error.message;
+                        debugInfo.style.color = '#f44336';
+                        console.error('Camera error:', error);
+                    });
+            } else {
+                debugInfo.textContent = 'Camera Status: ❌ Not supported';
+                debugInfo.style.color = '#f44336';
+            }
+        }
+        
+        function testImageTracking() {
+            // Simulate image tracking for testing
+            console.log('Testing image tracking...');
+            updateStatus('Testing tracking...', 'status-searching');
+            
+            // Simulate finding a marker after 2 seconds
+            setTimeout(() => {
+                updateStatus('Test: Image detected!', 'status-tracking');
+                showTawafUI();
+                
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    updateStatus('Searching for Kaaba image...', 'status-searching');
+                }, 3000);
+            }, 2000);
+        }
+        
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const scene = document.querySelector('a-scene');
+            if (scene) {
+                if (debugMode) {
+                    scene.setAttribute('arjs', 'debugUIEnabled: true');
+                    debugInfo.style.display = 'block';
+                } else {
+                    scene.setAttribute('arjs', 'debugUIEnabled: false');
+                    debugInfo.style.display = 'none';
+                }
+            }
+        }
+        
+        function setupAREvents() {
+            // Listen for marker detection
+            const marker = document.getElementById('kaabaMarker');
+            if (marker) {
+                marker.addEventListener('markerFound', function() {
+                    console.log('Marker found!');
+                    updateStatus('Tracking Kaaba', 'status-tracking');
+                    if (!isTawafActive) {
+                        showTawafUI();
+                    }
+                });
+                
+                marker.addEventListener('markerLost', function() {
+                    console.log('Marker lost!');
+                    updateStatus('Searching for Kaaba image...', 'status-searching');
+                });
+            }
+        }
+        
+        function updateStatus(text, className) {
+            statusText.textContent = text;
+            arStatus.className = 'ar-status ' + className;
+        }
+        
+        function startTawaf() {
+            showTawafUI();
+        }
+        
+        function showTawafUI() {
+            mainMenu.style.display = 'none';
+            tawafUI.style.display = 'block';
+            updateUI();
+        }
+        
+        function showMainMenu() {
+            mainMenu.style.display = 'block';
+            tawafUI.style.display = 'none';
+            settingsPanel.style.display = 'none';
+            helpPanel.style.display = 'none';
+            pauseTawaf();
+        }
+        
+        function startTawafRoutine() {
+            if (!isTawafActive) {
+                isTawafActive = true;
+                currentRound = 1;
+                currentCorner = 0;
+                startBtn.style.display = 'none';
+                pauseBtn.style.display = 'inline-block';
+                
+                // Start the tawaf cycle
+                tawafInterval = setInterval(advanceTawaf, 3000);
+                
+                // Play start guidance
+                playGuidance('start');
+                
+                updateUI();
+            }
+        }
+        
+        function pauseTawaf() {
+            isTawafActive = false;
+            clearInterval(tawafInterval);
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            updateUI();
+        }
+        
+        function resetTawaf() {
+            pauseTawaf();
+            currentRound = 0;
+            currentCorner = 0;
+            updateUI();
+        }
+        
+        function advanceTawaf() {
+            if (!isTawafActive) return;
+            
+            currentCorner++;
+            
+            if (currentCorner >= 4) {
+                currentCorner = 0;
+                currentRound++;
+                
+                if (currentRound > 7) {
+                    // Tawaf completed
+                    pauseTawaf();
+                    playGuidance('complete');
+                    instructionText.textContent = instructions[currentLanguage].complete;
+                    return;
+                }
+            }
+            
+            // Play corner-specific prayer
+            playPrayer(currentCorner);
+            
+            updateUI();
+        }
+        
+        function updateUI() {
+            roundText.textContent = `Round: ${currentRound}/7`;
+            
+            if (!isTawafActive) {
+                instructionText.textContent = instructions[currentLanguage].start;
+            } else {
+                const cornerName = cornerNames[currentLanguage][currentCorner];
+                instructionText.textContent = instructions[currentLanguage].goToCorner.replace('{corner}', cornerName);
+            }
+            
+            // Update progress
+            const progress = (currentRound - 1) / 7 + currentCorner / (7 * 4);
+            progressFill.style.width = (progress * 100) + '%';
+        }
+        
+        function playPrayer(cornerIndex) {
+            // Simulate prayer audio (in real implementation, load actual audio files)
+            console.log(`Playing prayer for corner ${cornerIndex}`);
+            
+            // Example audio URLs (replace with actual prayer audio files)
+            const prayerUrls = [
+                'audio/prayer_black_stone.mp3',
+                'audio/prayer_yemen.mp3',
+                'audio/prayer_shami.mp3',
+                'audio/prayer_iraqi.mp3'
+            ];
+            
+            if (prayerUrls[cornerIndex]) {
+                prayerAudio.src = prayerUrls[cornerIndex];
+                prayerAudio.volume = getPrayerVolume();
+                prayerAudio.play().catch(e => console.log('Audio play failed:', e));
+            }
+        }
+        
+        function playGuidance(type) {
+            // Simulate guidance audio
+            console.log(`Playing guidance: ${type}`);
+            
+            const guidanceUrls = {
+                'start': 'audio/guidance_start.mp3',
+                'complete': 'audio/guidance_complete.mp3'
+            };
+            
+            if (guidanceUrls[type]) {
+                guidanceAudio.src = guidanceUrls[type];
+                guidanceAudio.volume = getGuidanceVolume();
+                guidanceAudio.play().catch(e => console.log('Audio play failed:', e));
+            }
+        }
+        
+        function showSettings() {
+            settingsPanel.style.display = 'block';
+        }
+        
+        function hideSettings() {
+            settingsPanel.style.display = 'none';
+        }
+        
+        function showHelp() {
+            helpPanel.style.display = 'block';
+        }
+        
+        function hideHelp() {
+            helpPanel.style.display = 'none';
+        }
+        
+        function saveSettings() {
+            const masterVolume = document.getElementById('masterVolume').value;
+            const prayerVolume = document.getElementById('prayerVolume').value;
+            const guidanceVolume = document.getElementById('guidanceVolume').value;
+            const language = document.getElementById('languageSelect').value;
+            const subtitles = document.getElementById('subtitlesToggle').checked;
+            
+            localStorage.setItem('tawafAR_masterVolume', masterVolume);
+            localStorage.setItem('tawafAR_prayerVolume', prayerVolume);
+            localStorage.setItem('tawafAR_guidanceVolume', guidanceVolume);
+            localStorage.setItem('tawafAR_language', language);
+            localStorage.setItem('tawafAR_subtitles', subtitles);
+            
+            currentLanguage = language;
+            updateUI();
+            hideSettings();
+        }
+        
+        function loadSettings() {
+            const masterVolume = localStorage.getItem('tawafAR_masterVolume') || 1;
+            const prayerVolume = localStorage.getItem('tawafAR_prayerVolume') || 0.8;
+            const guidanceVolume = localStorage.getItem('tawafAR_guidanceVolume') || 0.6;
+            const language = localStorage.getItem('tawafAR_language') || 'en';
+            const subtitles = localStorage.getItem('tawafAR_subtitles') !== 'false';
+            
+            document.getElementById('masterVolume').value = masterVolume;
+            document.getElementById('prayerVolume').value = prayerVolume;
+            document.getElementById('guidanceVolume').value = guidanceVolume;
+            document.getElementById('languageSelect').value = language;
+            document.getElementById('subtitlesToggle').checked = subtitles;
+            
+            currentLanguage = language;
+        }
+        
+        function getMasterVolume() {
+            return parseFloat(document.getElementById('masterVolume').value);
+        }
+        
+        function getPrayerVolume() {
+            return parseFloat(document.getElementById('prayerVolume').value) * getMasterVolume();
+        }
+        
+        function getGuidanceVolume() {
+            return parseFloat(document.getElementById('guidanceVolume').value) * getMasterVolume();
+        }
+        
+        // Handle volume changes
+        document.getElementById('masterVolume').addEventListener('input', function() {
+            prayerAudio.volume = getPrayerVolume();
+            guidanceAudio.volume = getGuidanceVolume();
+        });
+        
+        document.getElementById('prayerVolume').addEventListener('input', function() {
+            prayerAudio.volume = getPrayerVolume();
+        });
+        
+        document.getElementById('guidanceVolume').addEventListener('input', function() {
+            guidanceAudio.volume = getGuidanceVolume();
+        });
+        
+        document.getElementById('languageSelect').addEventListener('change', function() {
+            currentLanguage = this.value;
+            updateUI();
+        });
+        
+        // Setup AR events after AR.js loads
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                setupAREvents();
+            }, 2000);
+        });
+    </script>
+</body>
+</html> 
