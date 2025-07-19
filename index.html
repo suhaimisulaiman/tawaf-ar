@@ -299,6 +299,9 @@
                 currentCorner = 0;
                 currentRound++;
                 
+                // Show round completion animation
+                showRoundCompletionAnimation();
+                
                 // Check if Tawaf is complete
                 if (currentRound > 7) {
                     completeTawaf();
@@ -311,6 +314,48 @@
             updateTawafUI();
             highlightCurrentCorner();
             updateStatus(`Round ${currentRound}/7, Corner ${currentCorner + 1}/4`);
+        }
+        
+        // Complete Tawaf
+        function completeTawaf() {
+            isTawafActive = false;
+            isPaused = false;
+            
+            const cornerInfo = document.getElementById('cornerInfo');
+            const arabicText = document.getElementById('arabicText');
+            const translationText = document.getElementById('translationText');
+            
+            cornerInfo.textContent = '🎉 Tawaf Complete! 🎉';
+            arabicText.textContent = 'مُبَارَكٌ عَلَيْكَ! لَقَدْ أَكْمَلْتَ الطَّوَافَ السَّبْعَةَ';
+            translationText.textContent = 'Tahniah! Anda telah menyelesaikan tujuh pusingan Tawaf.';
+            
+            updateStatus('Tawaf completed successfully!');
+            
+            // Update AR round counter to show completion
+            const roundCounter = document.getElementById('roundCounter');
+            if (roundCounter) {
+                roundCounter.setAttribute('value', '🎉 Complete! 🎉');
+                roundCounter.setAttribute('color', '#FFD700');
+            }
+            
+            // Hide control buttons
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('pauseBtn').style.display = 'none';
+        }
+        
+        // Show round completion animation
+        function showRoundCompletionAnimation() {
+            const roundCounter = document.getElementById('roundCounter');
+            if (roundCounter) {
+                // Simple color change for round completion
+                roundCounter.setAttribute('color', '#FFD700');
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    roundCounter.setAttribute('color', '#FFFFFF');
+                }, 2000);
+            }
         }
         
         // Pause/Resume Tawaf
@@ -338,27 +383,6 @@
             updateTawafUI();
             resetCornerHighlights();
             updateStatus('Tawaf reset');
-        }
-        
-        // Complete Tawaf
-        function completeTawaf() {
-            isTawafActive = false;
-            isPaused = false;
-            
-            const cornerInfo = document.getElementById('cornerInfo');
-            const arabicText = document.getElementById('arabicText');
-            const translationText = document.getElementById('translationText');
-            
-            cornerInfo.textContent = '🎉 Tawaf Complete! 🎉';
-            arabicText.textContent = 'مُبَارَكٌ عَلَيْكَ! لَقَدْ أَكْمَلْتَ الطَّوَافَ السَّبْعَةَ';
-            translationText.textContent = 'Tahniah! Anda telah menyelesaikan tujuh pusingan Tawaf.';
-            
-            updateStatus('Tawaf completed successfully!');
-            
-            // Hide control buttons
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('nextBtn').style.display = 'none';
-            document.getElementById('pauseBtn').style.display = 'none';
         }
         
         // Show main menu
@@ -420,11 +444,14 @@
             // Reset all corners
             resetCornerHighlights();
             
-            // Highlight current corner
+            // Highlight current corner with simple scaling
             const currentCornerElement = document.getElementById(`corner${currentCorner}`);
             if (currentCornerElement) {
-                currentCornerElement.setAttribute('scale', '1.5 1.5 1.5');
-                currentCornerElement.setAttribute('material', 'shader: flat; emissive: #FFFFFF; emissiveIntensity: 0.5');
+                // Simple scale effect
+                currentCornerElement.setAttribute('scale', '1.3 1.3 1.3');
+                
+                // Simple glow effect
+                currentCornerElement.setAttribute('material', 'shader: flat; emissive: #FFFFFF; emissiveIntensity: 0.2');
             }
             
             // Update direction arrow
@@ -436,7 +463,10 @@
             for (let i = 0; i < 4; i++) {
                 const corner = document.getElementById(`corner${i}`);
                 if (corner) {
+                    // Reset scale
                     corner.setAttribute('scale', '1 1 1');
+                    
+                    // Reset material
                     corner.setAttribute('material', 'shader: flat');
                 }
             }
