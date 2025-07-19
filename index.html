@@ -416,6 +416,7 @@
             <button class="btn btn-secondary" onclick="toggleVisualDebug()">Toggle Visual Debug</button>
             <button class="btn btn-secondary" onclick="reloadLibraries()">Reload Libraries</button>
             <button class="btn btn-secondary" onclick="switchCamera()">Switch Camera</button>
+            <button class="btn btn-secondary" onclick="resetCamera()">Reset Camera</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -653,34 +654,8 @@
         function checkCameraStatus() {
             // Check if camera is available
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                // iOS Safari specific constraints
-                const constraints = {
-                    video: {
-                        facingMode: currentCamera, // Use current camera setting
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                };
-                
-                navigator.mediaDevices.getUserMedia(constraints)
-                    .then(function(stream) {
-                        console.log('Camera is working');
-                        updateStatus('Camera access granted', 'status-tracking');
-                        // Don't update debug info here as it will be updated by AR.js loading
-                    })
-                    .catch(function(error) {
-                        console.error('Camera error:', error);
-                        debugInfo.textContent = 'Camera Status: ❌ ' + error.message;
-                        debugInfo.style.color = '#f44336';
-                        updateStatus('Camera access denied: ' + error.message, 'status-error');
-                        
-                        // Show user-friendly error message
-                        if (error.name === 'NotAllowedError') {
-                            alert('Please allow camera access to use the AR features. Go to Settings > Safari > Camera and allow access.');
-                        } else if (error.name === 'NotFoundError') {
-                            alert('No camera found on this device.');
-                        }
-                    });
+                console.log('Camera API available, starting camera...');
+                startCamera();
             } else {
                 debugInfo.textContent = 'Camera Status: ❌ Not supported';
                 debugInfo.style.color = '#f44336';
@@ -727,7 +702,8 @@
             }
         }
         
-        let currentCamera = 'environment'; // Track current camera
+        let currentCamera = 'user'; // Start with front camera
+        let currentStream = null; // Track current stream
         
         function switchCamera() {
             console.log('Switching camera...');
@@ -738,20 +714,83 @@
             
             updateStatus(`Switching to ${cameraName} camera...`, 'status-searching');
             
-            // Stop current camera streams
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(stream => {
-                        stream.getTracks().forEach(track => track.stop());
-                    })
-                    .catch(err => console.log('No active stream to stop'));
+            // Stop current camera stream
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('Stopped track:', track.label);
+                });
+                currentStream = null;
             }
             
-            // Restart with new camera
+            // Wait a moment for stream to stop, then start new one
             setTimeout(() => {
-                checkCameraStatus();
-                updateStatus(`${cameraName} camera active`, 'status-tracking');
+                startCamera();
+            }, 500);
+        }
+        
+        function resetCamera() {
+            console.log('Resetting camera...');
+            updateStatus('Resetting camera...', 'status-searching');
+            
+            // Stop current stream
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            
+            // Reset to front camera
+            currentCamera = 'user';
+            
+            // Restart camera
+            setTimeout(() => {
+                startCamera();
             }, 1000);
+        }
+        
+        function startCamera() {
+            const constraints = {
+                video: {
+                    facingMode: currentCamera,
+                    width: { ideal: 1280, min: 640 },
+                    height: { ideal: 720, min: 480 }
+                }
+            };
+            
+            console.log('Starting camera with constraints:', constraints);
+            
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    currentStream = stream;
+                    console.log('Camera started successfully');
+                    updateStatus(`${currentCamera === 'environment' ? 'Back' : 'Front'} camera active`, 'status-tracking');
+                    
+                    // Update any existing video elements
+                    const videos = document.querySelectorAll('video');
+                    videos.forEach(video => {
+                        if (video.srcObject !== stream) {
+                            video.srcObject = stream;
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Camera error:', error);
+                    updateStatus(`Camera error: ${error.message}`, 'status-error');
+                    
+                    // Fallback to any available camera
+                    if (error.name === 'OverconstrainedError') {
+                        console.log('Trying fallback camera...');
+                        navigator.mediaDevices.getUserMedia({ video: true })
+                            .then(stream => {
+                                currentStream = stream;
+                                updateStatus('Camera active (fallback)', 'status-tracking');
+                            })
+                            .catch(fallbackError => {
+                                console.error('Fallback camera also failed:', fallbackError);
+                                updateStatus('Camera access denied', 'status-error');
+                            });
+                    }
+                });
         }
         
         function reloadLibraries() {
@@ -850,23 +889,20 @@
             `;
             document.body.appendChild(video);
             
-            // Start camera
-            navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: currentCamera,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                } 
-            })
-            .then(stream => {
-                video.srcObject = stream;
-                console.log('Simple camera feed started');
+            // Use the current camera stream
+            if (currentStream) {
+                video.srcObject = currentStream;
+                console.log('Simple camera feed started with current stream');
                 updateStatus('Simple camera feed active', 'status-tracking');
-            })
-            .catch(err => {
-                console.error('Simple camera error:', err);
-                updateStatus('Camera error: ' + err.message, 'status-error');
-            });
+            } else {
+                // Start camera if no current stream
+                startCamera();
+                setTimeout(() => {
+                    if (currentStream) {
+                        video.srcObject = currentStream;
+                    }
+                }, 1000);
+            }
         }
         
         function showARScene() {
