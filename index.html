@@ -15,6 +15,17 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
+            background: transparent;
+        }
+        
+        /* Ensure AR scene is visible */
+        a-scene {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1 !important;
         }
         
         .ui-overlay {
@@ -161,7 +172,7 @@
         
         /* 5. FIGURE-GROUND - Clear hierarchy */
         .main-content {
-            background: rgba(255, 255, 255, 0.75);
+            background: rgba(255, 255, 255, 0.5);
             border-radius: 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             /* Removed backdrop-filter to prevent AR scene blocking */
@@ -346,7 +357,7 @@
     </div>
     
     <!-- AR Scene -->
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;" style="z-index: 1;">
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;" style="z-index: 1; position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
         <!-- Hiro Marker -->
         <a-marker preset="hiro" id="kaabaMarker">
             <!-- Simple Black Kaaba -->
