@@ -160,6 +160,12 @@
                 <button class="btn btn-secondary" onclick="resetTawaf()">Reset</button>
                 <button class="btn btn-secondary" onclick="showMainMenu()">Menu</button>
             </div>
+            
+            <!-- Smart Features Info -->
+            <div style="margin-top: 10px; font-size: 12px; opacity: 0.8;">
+                <div>💡 Smart Features: Auto-pause • Swipe to advance • Camera hints</div>
+                <div>👆 Swipe right to advance corners</div>
+            </div>
         </div>
     </div>
     
@@ -242,6 +248,13 @@
         let isTawafActive = false;
         let isPaused = false;
         
+        // Smart features state
+        let isAutoPauseEnabled = true;
+        let isGestureControlEnabled = true;
+        let lastTouchTime = 0;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
         // Corner data
         const corners = [
             {
@@ -285,6 +298,15 @@
                 updateTawafUI();
                 highlightCurrentCorner();
                 updateStatus('Tawaf started - Round 1, Corner 1');
+                
+                // Enable smart features
+                isAutoPauseEnabled = true;
+                isGestureControlEnabled = true;
+                
+                // Provide initial guidance
+                setTimeout(() => {
+                    provideCameraHint();
+                }, 1000);
             }
         }
         
@@ -356,6 +378,137 @@
                     roundCounter.setAttribute('color', '#FFFFFF');
                 }, 2000);
             }
+        }
+        
+        // Smart Features Functions
+        
+        // Provide camera-based hints
+        function provideCameraHint() {
+            if (!isTawafActive || isPaused) return;
+            
+            const corner = corners[currentCorner];
+            const hints = [
+                "Turn left to face Black Stone corner",
+                "Continue counterclockwise to Yemen corner", 
+                "Keep going to Shami corner",
+                "Almost there - Iraqi corner next"
+            ];
+            
+            const hint = hints[currentCorner];
+            updateStatus(`💡 Hint: ${hint}`);
+            
+            // Show hint in UI
+            const cornerInfo = document.getElementById('cornerInfo');
+            if (cornerInfo) {
+                cornerInfo.textContent = `${corner.name} - ${hint}`;
+            }
+        }
+        
+        // Auto-pause when marker is lost
+        function handleMarkerLost() {
+            if (isTawafActive && isAutoPauseEnabled && !isPaused) {
+                isPaused = true;
+                updateStatus('⏸️ Auto-paused: Marker lost. Resume when marker found.');
+                
+                // Update pause button
+                const pauseBtn = document.getElementById('pauseBtn');
+                if (pauseBtn) {
+                    pauseBtn.textContent = 'Resume';
+                }
+            }
+        }
+        
+        // Auto-resume when marker is found
+        function handleMarkerFound() {
+            if (isTawafActive && isPaused && isAutoPauseEnabled) {
+                isPaused = false;
+                updateStatus('▶️ Auto-resumed: Marker found!');
+                
+                // Update pause button
+                const pauseBtn = document.getElementById('pauseBtn');
+                if (pauseBtn) {
+                    pauseBtn.textContent = 'Pause';
+                }
+            }
+        }
+        
+        // Gesture control for advancing corners
+        function setupGestureControls() {
+            if (!isGestureControlEnabled) return;
+            
+            // Touch events for swipe gestures
+            document.addEventListener('touchstart', function(event) {
+                if (!isTawafActive || isPaused) return;
+                
+                const touch = event.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                lastTouchTime = Date.now();
+            });
+            
+            document.addEventListener('touchend', function(event) {
+                if (!isTawafActive || isPaused) return;
+                
+                const touch = event.changedTouches[0];
+                const touchEndX = touch.clientX;
+                const touchEndY = touch.clientY;
+                const currentTime = Date.now();
+                
+                // Check if it's a quick swipe (less than 500ms)
+                if (currentTime - lastTouchTime < 500) {
+                    const deltaX = touchEndX - touchStartX;
+                    const deltaY = touchEndY - touchStartY;
+                    
+                    // Horizontal swipe (left or right)
+                    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+                        if (deltaX > 0) {
+                            // Swipe right - advance corner
+                            nextCorner();
+                            updateStatus('👆 Swipe detected: Advanced to next corner');
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Smart corner detection based on camera angle
+        function detectCameraAngle() {
+            if (!isTawafActive || isPaused) return;
+            
+            // This is a simplified version - in a real implementation,
+            // you would use device orientation or camera position
+            const corner = corners[currentCorner];
+            
+            // Provide contextual hints based on current corner
+            setTimeout(() => {
+                provideCameraHint();
+            }, 2000); // Show hint after 2 seconds
+        }
+        
+        // Toggle smart features
+        function toggleAutoPause() {
+            isAutoPauseEnabled = !isAutoPauseEnabled;
+            updateStatus(`Auto-pause ${isAutoPauseEnabled ? 'enabled' : 'disabled'}`);
+        }
+        
+        function toggleGestureControl() {
+            isGestureControlEnabled = !isGestureControlEnabled;
+            updateStatus(`Gesture control ${isGestureControlEnabled ? 'enabled' : 'disabled'}`);
+        }
+        
+        // Provide smart guidance based on user behavior
+        function provideSmartGuidance() {
+            if (!isTawafActive || isPaused) return;
+            
+            const guidance = [
+                "💡 Tip: Swipe right to advance corners",
+                "💡 Tip: Keep the marker visible for best tracking",
+                "💡 Tip: Move slowly around the Kaaba",
+                "💡 Tip: Follow the golden arrow direction"
+            ];
+            
+            const randomGuidance = guidance[Math.floor(Math.random() * guidance.length)];
+            updateStatus(randomGuidance);
         }
         
         // Pause/Resume Tawaf
@@ -493,14 +646,19 @@
                     updateStatus('🎯 Hiro marker detected! Tawaf training ready');
                     mainMenu.style.display = 'none';
                     tawafUI.style.display = 'block';
+                    handleMarkerFound(); // Auto-resume when marker is found
                 });
                 
                 marker.addEventListener('markerLost', function() {
                     updateStatus('Searching for hiro marker...');
                     mainMenu.style.display = 'block';
                     tawafUI.style.display = 'none';
+                    handleMarkerLost(); // Auto-pause when marker is lost
                 });
             }
+
+            setupGestureControls(); // Setup gesture controls
+            detectCameraAngle(); // Start camera angle detection
         });
     </script>
 </body>
