@@ -81,14 +81,109 @@
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;">
         <!-- Hiro Marker -->
         <a-marker preset="hiro" id="kaabaMarker">
-            <!-- Kaaba -->
-            <a-box position="0 0.5 0" 
-                   width="1" 
-                   height="1" 
-                   depth="1" 
-                   color="#8B4513"
-                   material="shader: flat">
-            </a-box>
+            <!-- Realistic Kaaba -->
+            <a-entity position="0 0.5 0">
+                <!-- Main Kaaba structure (black) -->
+                <a-box position="0 0 0" 
+                       width="1" 
+                       height="1" 
+                       depth="1" 
+                       color="#000000"
+                       material="shader: flat">
+                </a-box>
+                
+                <!-- Gold band at top -->
+                <a-box position="0 0.45 0" 
+                       width="1.1" 
+                       height="0.1" 
+                       depth="1.1" 
+                       color="#FFD700"
+                       material="shader: flat">
+                </a-box>
+                
+                <!-- Gold band at bottom -->
+                <a-box position="0 -0.45 0" 
+                       width="1.1" 
+                       height="0.1" 
+                       depth="1.1" 
+                       color="#FFD700"
+                       material="shader: flat">
+                </a-box>
+                
+                <!-- Black Stone (Hajar Aswad) - corner marker -->
+                <a-sphere position="0.5 0.3 0.5" 
+                          radius="0.08" 
+                          color="#000000"
+                          material="shader: flat">
+                </a-sphere>
+                
+                <!-- Gold frame around Black Stone -->
+                <a-ring position="0.5 0.3 0.5" 
+                        radius="0.12" 
+                        radius-inner="0.08" 
+                        color="#FFD700"
+                        rotation="-90 0 0"
+                        material="shader: flat">
+                </a-ring>
+                
+                <!-- Door of Kaaba (gold) -->
+                <a-box position="0 0.1 0.51" 
+                       width="0.3" 
+                       height="0.6" 
+                       depth="0.02" 
+                       color="#FFD700"
+                       material="shader: flat">
+                </a-box>
+                
+                <!-- Door handle -->
+                <a-sphere position="0.15 0.1 0.52" 
+                          radius="0.02" 
+                          color="#FFD700"
+                          material="shader: flat">
+                </a-sphere>
+                
+                <!-- Gold decorations on sides -->
+                <a-box position="0.51 0.2 0" 
+                       width="0.02" 
+                       height="0.4" 
+                       depth="1" 
+                       color="#FFD700"
+                       material="shader: flat">
+                </a-box>
+                
+                <a-box position="-0.51 0.2 0" 
+                       width="0.02" 
+                       height="0.4" 
+                       depth="1" 
+                       color="#FFD700"
+                       material="shader: flat">
+                </a-box>
+                
+                <!-- Corner markers (gold) -->
+                <a-sphere position="0.5 0.4 0.5" 
+                          radius="0.05" 
+                          color="#FFD700"
+                          material="shader: flat">
+                </a-sphere>
+                
+                <a-sphere position="0.5 0.4 -0.5" 
+                          radius="0.05" 
+                          color="#FFD700"
+                          material="shader: flat">
+                </a-sphere>
+                
+                <a-sphere position="-0.5 0.4 -0.5" 
+                          radius="0.05" 
+                          color="#FFD700"
+                          material="shader: flat">
+                </a-sphere>
+                
+                <a-sphere position="-0.5 0.4 0.5" 
+                          radius="0.05" 
+                          color="#FFD700"
+                          material="shader: flat">
+                </a-sphere>
+            </a-entity>
         </a-marker>
         
         <!-- Camera -->
