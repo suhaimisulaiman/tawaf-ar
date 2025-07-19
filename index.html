@@ -208,11 +208,6 @@
         </div>
     </div>
     
-    <!-- Audio Elements -->
-    <audio id="prayerAudio" preload="auto">
-        <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.wav" type="audio/wav">
-    </audio>
-    
     <!-- AR Scene -->
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;">
         <!-- Hiro Marker -->
@@ -546,53 +541,43 @@
         function playPrayer() {
             if (!isTawafActive) return;
             
-            const audio = document.getElementById('prayerAudio');
             const playBtn = document.getElementById('playBtn');
+            const corner = corners[currentCorner];
             
             // Stop any currently playing audio
             stopPrayer();
             
-            // Set audio source based on current corner
-            const corner = corners[currentCorner];
-            const audioUrls = [
-                'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Black Stone
-                'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Yemen
-                'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Shami
-                'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav'  // Iraqi
-            ];
+            // Try to play a simple tone with different frequencies for each corner
+            playCornerTone(currentCorner);
             
-            audio.src = audioUrls[currentCorner];
-            audio.volume = audioVolume;
-            
-            // Play audio
-            audio.play().then(() => {
-                playBtn.textContent = '⏸️ Pause';
-                playBtn.onclick = pausePrayer;
-                updateStatus(`Playing prayer for ${corner.name}`);
-            }).catch(error => {
-                console.error('Audio play failed:', error);
-                updateStatus('Audio not available - using placeholder sound');
-                // Fallback: use a simple beep sound
-                playFallbackAudio();
-            });
+            playBtn.textContent = '⏸️ Pause';
+            playBtn.onclick = pausePrayer;
+            updateStatus(`Playing prayer tone for ${corner.name}`);
         }
         
         function pausePrayer() {
-            const audio = document.getElementById('prayerAudio');
             const playBtn = document.getElementById('playBtn');
             
-            audio.pause();
+            // Stop any playing audio
+            if (currentAudio) {
+                currentAudio.stop();
+                currentAudio = null;
+            }
+            
             playBtn.textContent = '🔊 Play Prayer';
             playBtn.onclick = playPrayer;
             updateStatus('Prayer paused');
         }
         
         function stopPrayer() {
-            const audio = document.getElementById('prayerAudio');
             const playBtn = document.getElementById('playBtn');
             
-            audio.pause();
-            audio.currentTime = 0;
+            // Stop any playing audio
+            if (currentAudio) {
+                currentAudio.stop();
+                currentAudio = null;
+            }
+            
             playBtn.textContent = '🔊 Play Prayer';
             playBtn.onclick = playPrayer;
         }
@@ -600,32 +585,53 @@
         function updateVolume() {
             const volumeSlider = document.getElementById('volumeSlider');
             audioVolume = parseFloat(volumeSlider.value);
-            
-            const audio = document.getElementById('prayerAudio');
-            audio.volume = audioVolume;
-            
             updateStatus(`Volume: ${Math.round(audioVolume * 100)}%`);
         }
         
-        function playFallbackAudio() {
-            // Create a simple beep sound using Web Audio API
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(audioVolume * 0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 2);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 2);
-            
-            updateStatus('Playing fallback audio');
+        function playCornerTone(cornerIndex) {
+            try {
+                // Create audio context
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Different frequencies for each corner
+                const frequencies = [440, 523, 659, 784]; // A, C, E, G notes
+                const frequency = frequencies[cornerIndex];
+                
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                // Create a more prayer-like sound pattern
+                const duration = 3; // 3 seconds
+                const startTime = audioContext.currentTime;
+                
+                // Fade in
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(audioVolume * 0.3, startTime + 0.5);
+                
+                // Hold
+                gainNode.gain.setValueAtTime(audioVolume * 0.3, startTime + 0.5);
+                gainNode.gain.setValueAtTime(audioVolume * 0.3, startTime + duration - 0.5);
+                
+                // Fade out
+                gainNode.gain.linearRampToValueAtTime(0, startTime + duration);
+                
+                oscillator.start(startTime);
+                oscillator.stop(startTime + duration);
+                
+                // Store reference to stop later
+                currentAudio = oscillator;
+                
+                updateStatus(`Playing tone for ${corners[cornerIndex].name}`);
+                
+            } catch (error) {
+                console.error('Audio generation failed:', error);
+                updateStatus('Audio not supported on this device');
+            }
         }
         
         // Auto-play prayer when corner changes
