@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Tawaf AR Trainer - Hajj Pilgrimage Education</title>
     
     <!-- AR.js - More reliable loading -->
@@ -352,6 +354,7 @@
             <button class="btn btn-secondary" onclick="showHelp()">Help</button>
             <button class="btn btn-warning" onclick="toggleDebug()">Toggle Debug</button>
             <button class="btn btn-secondary" onclick="testImageTracking()">Test Tracking</button>
+            <button class="btn btn-secondary" onclick="testCamera()">Test Camera</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -586,19 +589,38 @@
         function checkCameraStatus() {
             // Check if camera is available
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
+                // iOS Safari specific constraints
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // Use back camera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                
+                navigator.mediaDevices.getUserMedia(constraints)
                     .then(function(stream) {
                         console.log('Camera is working');
+                        updateStatus('Camera access granted', 'status-tracking');
                         // Don't update debug info here as it will be updated by AR.js loading
                     })
                     .catch(function(error) {
+                        console.error('Camera error:', error);
                         debugInfo.textContent = 'Camera Status: ❌ ' + error.message;
                         debugInfo.style.color = '#f44336';
-                        console.error('Camera error:', error);
+                        updateStatus('Camera access denied: ' + error.message, 'status-error');
+                        
+                        // Show user-friendly error message
+                        if (error.name === 'NotAllowedError') {
+                            alert('Please allow camera access to use the AR features. Go to Settings > Safari > Camera and allow access.');
+                        } else if (error.name === 'NotFoundError') {
+                            alert('No camera found on this device.');
+                        }
                     });
             } else {
                 debugInfo.textContent = 'Camera Status: ❌ Not supported';
                 debugInfo.style.color = '#f44336';
+                updateStatus('Camera not supported on this device', 'status-error');
             }
         }
         
@@ -617,6 +639,59 @@
                     updateStatus('Searching for Kaaba image...', 'status-searching');
                 }, 3000);
             }, 2000);
+        }
+        
+        function testCamera() {
+            console.log('Testing camera access...');
+            updateStatus('Testing camera...', 'status-searching');
+            
+            // Force camera test
+            checkCameraStatus();
+            
+            // Also try to show camera feed directly
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const constraints = {
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                
+                navigator.mediaDevices.getUserMedia(constraints)
+                    .then(stream => {
+                        console.log('Camera test successful');
+                        updateStatus('Camera test: SUCCESS', 'status-tracking');
+                        
+                        // Create a test video element
+                        const testVideo = document.createElement('video');
+                        testVideo.srcObject = stream;
+                        testVideo.autoplay = true;
+                        testVideo.playsinline = true;
+                        testVideo.style.cssText = `
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            z-index: 999;
+                        `;
+                        document.body.appendChild(testVideo);
+                        
+                        // Remove after 3 seconds
+                        setTimeout(() => {
+                            document.body.removeChild(testVideo);
+                            stream.getTracks().forEach(track => track.stop());
+                            updateStatus('Camera test completed', 'status-searching');
+                        }, 3000);
+                    })
+                    .catch(error => {
+                        console.error('Camera test failed:', error);
+                        updateStatus('Camera test: FAILED - ' + error.message, 'status-error');
+                        alert('Camera test failed: ' + error.message + '\n\nPlease check:\n1. Camera permissions in Safari\n2. HTTPS connection\n3. Device has camera');
+                    });
+            }
         }
         
         function toggleDebug() {
