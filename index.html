@@ -410,7 +410,7 @@
             <button class="btn btn-warning" onclick="toggleDebug()">Toggle Debug</button>
             <button class="btn btn-secondary" onclick="testImageTracking()">Test Tracking</button>
             <button class="btn btn-secondary" onclick="testCamera()">Test Camera</button>
-            <button class="btn btn-secondary" onclick="showARScene()">Show AR Scene</button>
+            <button class="btn btn-secondary" onclick="showARScene()">Show AR Scene (Hybrid)</button>
             <button class="btn btn-secondary" onclick="showSimpleCamera()">Show Simple Camera</button>
             <button class="btn btn-secondary" onclick="debugMarkerDetection()">Debug Marker</button>
             <button class="btn btn-secondary" onclick="toggleVisualDebug()">Toggle Visual Debug</button>
@@ -420,6 +420,7 @@
             <button class="btn btn-secondary" onclick="forceMarkerDetection()">Force Marker</button>
             <button class="btn btn-secondary" onclick="testMarkerVisibility()">Test Marker Visibility</button>
             <button class="btn btn-secondary" onclick="showHybridAR()">Show Hybrid AR</button>
+            <button class="btn btn-secondary" onclick="showCameraOnly()">Show Camera Only</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -863,6 +864,105 @@
             showMainMenu();
         }
         
+        function showCameraOnly() {
+            console.log('Showing camera only mode...');
+            
+            // Hide the main menu
+            mainMenu.style.display = 'none';
+            
+            // Create camera-only view
+            const cameraContainer = document.createElement('div');
+            cameraContainer.id = 'cameraOnly';
+            cameraContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+            `;
+            document.body.appendChild(cameraContainer);
+            
+            // Add camera feed
+            const video = document.createElement('video');
+            video.id = 'cameraOnlyVideo';
+            video.autoplay = true;
+            video.playsinline = true;
+            video.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            `;
+            cameraContainer.appendChild(video);
+            
+            // Add overlay UI
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 2;
+            `;
+            cameraContainer.appendChild(overlay);
+            
+            // Add instruction text
+            const instruction = document.createElement('div');
+            instruction.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                pointer-events: auto;
+            `;
+            instruction.innerHTML = `
+                <h3>📷 Camera Mode</h3>
+                <p>Camera feed is working!</p>
+                <p>Point at hiro marker and click "Simulate Detection"</p>
+                <button onclick="simulateDetection()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin: 10px;">Simulate Detection</button>
+                <button onclick="hideCameraOnly()" style="background: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin: 10px;">Close</button>
+            `;
+            overlay.appendChild(instruction);
+            
+            // Start camera
+            if (currentStream) {
+                video.srcObject = currentStream;
+            } else {
+                startCamera();
+                setTimeout(() => {
+                    if (currentStream) {
+                        video.srcObject = currentStream;
+                    }
+                }, 1000);
+            }
+            
+            updateStatus('Camera only mode active', 'status-tracking');
+        }
+        
+        function hideCameraOnly() {
+            const cameraOnly = document.getElementById('cameraOnly');
+            if (cameraOnly) {
+                document.body.removeChild(cameraOnly);
+            }
+            showMainMenu();
+        }
+        
+        function simulateDetection() {
+            console.log('Simulating marker detection...');
+            showTawafUI();
+            hideCameraOnly();
+        }
+        
         function testMarkerVisibility() {
             console.log('Testing marker visibility...');
             
@@ -1113,66 +1213,9 @@
         function showARScene() {
             console.log('Manually showing AR scene...');
             
-            // Hide the main menu
-            mainMenu.style.display = 'none';
-            
-            // Show AR scene
-            const arScene = document.getElementById('arScene');
-            if (arScene) {
-                arScene.style.display = 'block';
-                console.log('AR scene displayed');
-                updateStatus('AR scene active - point camera at hiro marker', 'status-searching');
-                
-                // Force AR scene to be visible and on top
-                arScene.style.position = 'fixed';
-                arScene.style.top = '0';
-                arScene.style.left = '0';
-                arScene.style.width = '100%';
-                arScene.style.height = '100%';
-                arScene.style.zIndex = '1';
-                
-                // Make sure A-Frame canvas is visible
-                const canvas = document.querySelector('.a-canvas');
-                if (canvas) {
-                    canvas.style.display = 'block';
-                    canvas.style.position = 'fixed';
-                    canvas.style.top = '0';
-                    canvas.style.left = '0';
-                    canvas.style.width = '100%';
-                    canvas.style.height = '100%';
-                    canvas.style.zIndex = '1';
-                }
-                
-                // Wait for A-Frame to initialize
-                setTimeout(() => {
-                    const scene = document.querySelector('a-scene');
-                    if (scene) {
-                        console.log('A-Frame scene found, checking camera...');
-                        
-                        // Check if camera is working in AR scene
-                        if (currentStream) {
-                            console.log('Using existing camera stream for AR');
-                            // AR.js should use the existing stream
-                        } else {
-                            console.log('No camera stream, starting one...');
-                            startCamera();
-                        }
-                        
-                        // Force AR scene to render
-                        scene.renderer.render(scene.object3D, scene.camera);
-                    } else {
-                        console.error('A-Frame scene not found');
-                        // Fallback to simple camera
-                        showSimpleCamera();
-                    }
-                }, 2000);
-                
-                console.log('AR scene and canvas should now be visible');
-            } else {
-                console.error('AR scene element not found');
-                // Fallback to simple camera
-                showSimpleCamera();
-            }
+            // For now, just use the hybrid AR mode which works better
+            console.log('AR.js scene has issues, using hybrid mode instead...');
+            showHybridAR();
         }
         
         function testCamera() {
