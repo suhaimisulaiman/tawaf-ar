@@ -387,6 +387,7 @@
             <button class="btn btn-secondary" onclick="testCamera()">Test Camera</button>
             <button class="btn btn-secondary" onclick="showARScene()">Show AR Scene</button>
             <button class="btn btn-secondary" onclick="showSimpleCamera()">Show Simple Camera</button>
+            <button class="btn btn-secondary" onclick="debugMarkerDetection()">Debug Marker</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -479,18 +480,20 @@
 
     <!-- A-Frame Scene (will be initialized after AR.js loads) -->
     <div id="arScene" style="display: none;">
-        <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720;">
+        <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720; trackingMethod: best;">
             
             <!-- Kaaba 3D Model - Multiple marker support -->
             <!-- Hiro marker (default) -->
-            <a-marker preset="hiro" id="kaabaMarker" emitevents="true" cursor="rayOrigin: mouse">
+            <a-marker preset="hiro" id="kaabaMarker" emitevents="true" cursor="rayOrigin: mouse" raycaster="objects: .clickable">
+                <!-- Add a simple visible object to confirm marker detection -->
                 <a-box position="0 0.5 0" 
                        rotation="0 0 0" 
                        width="1" 
                        height="1" 
                        depth="1" 
                        color="#8B4513"
-                       material="shader: flat">
+                       material="shader: flat"
+                       class="clickable">
                     <!-- Black Stone corner indicator -->
                     <a-sphere position="0.5 0.5 0.5" 
                               radius="0.1" 
@@ -684,6 +687,46 @@
             }, 2000);
         }
         
+        function debugMarkerDetection() {
+            console.log('=== MARKER DETECTION DEBUG ===');
+            
+            // Check if AR scene is loaded
+            const scene = document.querySelector('a-scene');
+            if (scene) {
+                console.log('✅ A-Frame scene found');
+                console.log('Scene attributes:', scene.getAttributeNames());
+            } else {
+                console.log('❌ A-Frame scene not found');
+            }
+            
+            // Check if marker element exists
+            const marker = document.getElementById('kaabaMarker');
+            if (marker) {
+                console.log('✅ Marker element found');
+                console.log('Marker attributes:', marker.getAttributeNames());
+                console.log('Marker visible:', marker.getAttribute('visible'));
+            } else {
+                console.log('❌ Marker element not found');
+            }
+            
+            // Check AR.js status
+            if (typeof ARjs !== 'undefined') {
+                console.log('✅ AR.js library loaded');
+            } else {
+                console.log('❌ AR.js library not loaded');
+            }
+            
+            // Check camera status
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                console.log('✅ Camera API available');
+            } else {
+                console.log('❌ Camera API not available');
+            }
+            
+            // Show debug info to user
+            alert('Debug info logged to console. Check Safari Developer Tools for details.');
+        }
+        
         function showSimpleCamera() {
             console.log('Showing simple camera feed...');
             
@@ -839,6 +882,7 @@
             if (marker) {
                 console.log('Marker element found, adding event listeners...');
                 
+                // Multiple event types for better detection
                 marker.addEventListener('markerFound', function() {
                     console.log('🎯 MARKER FOUND!');
                     updateStatus('🎯 Kaaba detected!', 'status-tracking');
@@ -848,6 +892,9 @@
                     
                     // Add visual feedback
                     marker.setAttribute('visible', 'true');
+                    
+                    // Show success message
+                    alert('🎯 Hiro marker detected! AR content should be visible.');
                 });
                 
                 marker.addEventListener('markerLost', function() {
@@ -859,6 +906,12 @@
                 // Add click event for testing
                 marker.addEventListener('click', function() {
                     console.log('Marker clicked!');
+                    showTawafUI();
+                });
+                
+                // Add touch events for mobile
+                marker.addEventListener('touchstart', function() {
+                    console.log('Marker touched!');
                     showTawafUI();
                 });
                 
@@ -881,7 +934,21 @@
                 scene.addEventListener('camera-error', function(error) {
                     console.error('Camera error in scene:', error);
                 });
+                
+                // Listen for AR.js specific events
+                scene.addEventListener('arjs-nft-loaded', function() {
+                    console.log('AR.js NFT loaded');
+                });
+                
+                scene.addEventListener('arjs-marker-found', function(event) {
+                    console.log('AR.js marker found event:', event);
+                });
             }
+            
+            // Add global click handler for debugging
+            document.addEventListener('click', function(event) {
+                console.log('Global click event:', event.target);
+            });
         }
         
         function updateStatus(text, className) {
