@@ -373,6 +373,11 @@
     <div class="debug-info" id="debugInfo">
         Loading AR.js...
     </div>
+    
+    <!-- Visual Debug Display -->
+    <div id="visualDebug" style="position: fixed; top: 50px; left: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 2000; display: none;">
+        <div id="debugStatus">Debug: Ready</div>
+    </div>
 
     <!-- Main Menu -->
     <div class="ui-overlay">
@@ -388,6 +393,7 @@
             <button class="btn btn-secondary" onclick="showARScene()">Show AR Scene</button>
             <button class="btn btn-secondary" onclick="showSimpleCamera()">Show Simple Camera</button>
             <button class="btn btn-secondary" onclick="debugMarkerDetection()">Debug Marker</button>
+            <button class="btn btn-secondary" onclick="toggleVisualDebug()">Toggle Visual Debug</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -687,6 +693,32 @@
             }, 2000);
         }
         
+        function toggleVisualDebug() {
+            const debugDiv = document.getElementById('visualDebug');
+            if (debugDiv.style.display === 'none') {
+                debugDiv.style.display = 'block';
+                updateVisualDebug();
+                // Update debug info every 2 seconds
+                setInterval(updateVisualDebug, 2000);
+            } else {
+                debugDiv.style.display = 'none';
+            }
+        }
+        
+        function updateVisualDebug() {
+            const debugStatus = document.getElementById('debugStatus');
+            const scene = document.querySelector('a-scene');
+            const marker = document.getElementById('kaabaMarker');
+            
+            let status = '=== DEBUG STATUS ===\n';
+            status += scene ? '✅ Scene: Loaded\n' : '❌ Scene: Missing\n';
+            status += marker ? '✅ Marker: Found\n' : '❌ Marker: Missing\n';
+            status += (typeof ARjs !== 'undefined') ? '✅ AR.js: Loaded\n' : '❌ AR.js: Missing\n';
+            status += 'Camera: ' + (navigator.mediaDevices ? 'Available' : 'Not Available') + '\n';
+            
+            debugStatus.textContent = status;
+        }
+        
         function debugMarkerDetection() {
             console.log('=== MARKER DETECTION DEBUG ===');
             
@@ -724,7 +756,13 @@
             }
             
             // Show debug info to user
-            alert('Debug info logged to console. Check Safari Developer Tools for details.');
+            let debugInfo = '=== DEBUG INFO ===\n';
+            debugInfo += scene ? '✅ A-Frame scene found\n' : '❌ A-Frame scene not found\n';
+            debugInfo += marker ? '✅ Marker element found\n' : '❌ Marker element not found\n';
+            debugInfo += (typeof ARjs !== 'undefined') ? '✅ AR.js library loaded\n' : '❌ AR.js library not loaded\n';
+            debugInfo += (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '✅ Camera API available\n' : '❌ Camera API not available\n';
+            
+            alert(debugInfo);
         }
         
         function showSimpleCamera() {
