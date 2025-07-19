@@ -419,6 +419,7 @@
             <button class="btn btn-secondary" onclick="resetCamera()">Reset Camera</button>
             <button class="btn btn-secondary" onclick="forceMarkerDetection()">Force Marker</button>
             <button class="btn btn-secondary" onclick="testMarkerVisibility()">Test Marker Visibility</button>
+            <button class="btn btn-secondary" onclick="showHybridAR()">Show Hybrid AR</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -731,6 +732,137 @@
             }, 500);
         }
         
+        function showHybridAR() {
+            console.log('Showing hybrid AR mode...');
+            
+            // Hide the main menu
+            mainMenu.style.display = 'none';
+            
+            // Create a hybrid view with camera feed and AR overlay
+            const hybridContainer = document.createElement('div');
+            hybridContainer.id = 'hybridAR';
+            hybridContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+            `;
+            document.body.appendChild(hybridContainer);
+            
+            // Add camera feed
+            const video = document.createElement('video');
+            video.id = 'hybridCamera';
+            video.autoplay = true;
+            video.playsinline = true;
+            video.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            `;
+            hybridContainer.appendChild(video);
+            
+            // Add AR overlay UI
+            const arOverlay = document.createElement('div');
+            arOverlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 2;
+            `;
+            hybridContainer.appendChild(arOverlay);
+            
+            // Add AR content that appears when marker is detected
+            const arContent = document.createElement('div');
+            arContent.id = 'arContent';
+            arContent.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                display: none;
+                pointer-events: auto;
+            `;
+            arContent.innerHTML = `
+                <h3>🕋 Kaaba Detected!</h3>
+                <p>AR content would appear here</p>
+                <button onclick="showTawafUI()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin: 10px;">Start Tawaf</button>
+                <button onclick="hideHybridAR()" style="background: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 5px; margin: 10px;">Close</button>
+            `;
+            arOverlay.appendChild(arContent);
+            
+            // Add status indicator
+            const statusIndicator = document.createElement('div');
+            statusIndicator.style.cssText = `
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                background: rgba(0,0,0,0.7);
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                font-size: 14px;
+            `;
+            statusIndicator.textContent = 'Point camera at hiro marker';
+            arOverlay.appendChild(statusIndicator);
+            
+            // Add manual trigger button
+            const triggerButton = document.createElement('button');
+            triggerButton.style.cssText = `
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                background: #4CAF50;
+                color: white;
+                border: none;
+                padding: 15px 25px;
+                border-radius: 25px;
+                font-size: 16px;
+                pointer-events: auto;
+            `;
+            triggerButton.textContent = 'Simulate Marker Detection';
+            triggerButton.onclick = function() {
+                arContent.style.display = 'block';
+                statusIndicator.textContent = '🎯 Kaaba detected!';
+                statusIndicator.style.background = 'rgba(76,175,80,0.8)';
+            };
+            arOverlay.appendChild(triggerButton);
+            
+            // Start camera
+            if (currentStream) {
+                video.srcObject = currentStream;
+            } else {
+                startCamera();
+                setTimeout(() => {
+                    if (currentStream) {
+                        video.srcObject = currentStream;
+                    }
+                }, 1000);
+            }
+            
+            updateStatus('Hybrid AR mode active', 'status-tracking');
+        }
+        
+        function hideHybridAR() {
+            const hybridAR = document.getElementById('hybridAR');
+            if (hybridAR) {
+                document.body.removeChild(hybridAR);
+            }
+            showMainMenu();
+        }
+        
         function testMarkerVisibility() {
             console.log('Testing marker visibility...');
             
@@ -1011,9 +1143,35 @@
                     canvas.style.zIndex = '1';
                 }
                 
+                // Wait for A-Frame to initialize
+                setTimeout(() => {
+                    const scene = document.querySelector('a-scene');
+                    if (scene) {
+                        console.log('A-Frame scene found, checking camera...');
+                        
+                        // Check if camera is working in AR scene
+                        if (currentStream) {
+                            console.log('Using existing camera stream for AR');
+                            // AR.js should use the existing stream
+                        } else {
+                            console.log('No camera stream, starting one...');
+                            startCamera();
+                        }
+                        
+                        // Force AR scene to render
+                        scene.renderer.render(scene.object3D, scene.camera);
+                    } else {
+                        console.error('A-Frame scene not found');
+                        // Fallback to simple camera
+                        showSimpleCamera();
+                    }
+                }, 2000);
+                
                 console.log('AR scene and canvas should now be visible');
             } else {
                 console.error('AR scene element not found');
+                // Fallback to simple camera
+                showSimpleCamera();
             }
         }
         
