@@ -55,10 +55,20 @@
             const arScene = document.getElementById('arScene');
             if (arScene) {
                 arScene.style.display = 'block';
+                console.log('AR scene should now be visible');
             }
             
             // Setup AR events
             setTimeout(setupAREvents, 1000);
+            
+            // Force canvas to be visible
+            setTimeout(() => {
+                const canvas = document.querySelector('.a-canvas');
+                if (canvas) {
+                    canvas.style.display = 'block';
+                    console.log('A-Frame canvas should now be visible');
+                }
+            }, 2000);
         }
         
         // Fallback mode without AR.js
@@ -121,6 +131,26 @@
             width: 100% !important;
             height: 100% !important;
             z-index: 1 !important;
+            display: block !important;
+        }
+        
+        /* AR Scene container */
+        #arScene {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1 !important;
+        }
+        
+        /* A-Frame scene */
+        a-scene {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
         }
         
         .ui-overlay {
@@ -356,6 +386,7 @@
             <button class="btn btn-secondary" onclick="testImageTracking()">Test Tracking</button>
             <button class="btn btn-secondary" onclick="testCamera()">Test Camera</button>
             <button class="btn btn-secondary" onclick="showARScene()">Show AR Scene</button>
+            <button class="btn btn-secondary" onclick="showSimpleCamera()">Show Simple Camera</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -653,13 +684,81 @@
             }, 2000);
         }
         
+        function showSimpleCamera() {
+            console.log('Showing simple camera feed...');
+            
+            // Hide the main menu
+            mainMenu.style.display = 'none';
+            
+            // Create a simple video element
+            const video = document.createElement('video');
+            video.id = 'simpleCamera';
+            video.autoplay = true;
+            video.playsinline = true;
+            video.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                z-index: 1;
+            `;
+            document.body.appendChild(video);
+            
+            // Start camera
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                } 
+            })
+            .then(stream => {
+                video.srcObject = stream;
+                console.log('Simple camera feed started');
+                updateStatus('Simple camera feed active', 'status-tracking');
+            })
+            .catch(err => {
+                console.error('Simple camera error:', err);
+                updateStatus('Camera error: ' + err.message, 'status-error');
+            });
+        }
+        
         function showARScene() {
             console.log('Manually showing AR scene...');
+            
+            // Hide the main menu
+            mainMenu.style.display = 'none';
+            
+            // Show AR scene
             const arScene = document.getElementById('arScene');
             if (arScene) {
                 arScene.style.display = 'block';
                 console.log('AR scene displayed');
                 updateStatus('AR scene active - point camera at hiro marker', 'status-searching');
+                
+                // Force AR scene to be visible and on top
+                arScene.style.position = 'fixed';
+                arScene.style.top = '0';
+                arScene.style.left = '0';
+                arScene.style.width = '100%';
+                arScene.style.height = '100%';
+                arScene.style.zIndex = '1';
+                
+                // Make sure A-Frame canvas is visible
+                const canvas = document.querySelector('.a-canvas');
+                if (canvas) {
+                    canvas.style.display = 'block';
+                    canvas.style.position = 'fixed';
+                    canvas.style.top = '0';
+                    canvas.style.left = '0';
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.zIndex = '1';
+                }
+                
+                console.log('AR scene and canvas should now be visible');
             } else {
                 console.error('AR scene element not found');
             }
