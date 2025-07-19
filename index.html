@@ -111,6 +111,22 @@
             margin: 10px 0;
             font-style: italic;
         }
+        
+        .arabic-text {
+            font-size: 18px;
+            margin: 10px 0;
+            font-weight: bold;
+            direction: rtl;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .translation-text {
+            font-size: 14px;
+            margin: 5px 0;
+            font-style: italic;
+            color: #CCCCCC;
+        }
     </style>
 </head>
 <body>
@@ -129,7 +145,8 @@
         <!-- Tawaf Training UI -->
         <div class="tawaf-ui" id="tawafUI">
             <div class="corner-info" id="cornerInfo">Point camera at Kaaba to start</div>
-            <div class="prayer-text" id="prayerText">Ready to begin Tawaf training</div>
+            <div class="arabic-text" id="arabicText">Ready to begin Tawaf training</div>
+            <div class="translation-text" id="translationText">Ready to begin Tawaf training</div>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
@@ -230,22 +247,26 @@
         const corners = [
             {
                 name: "Black Stone (Hajar Aswad)",
-                prayer: "Bismillah, Allahu Akbar. O Allah, I believe in You, I declare Your Oneness, and I accept Your covenant and promise.",
+                prayer: "بِسْمِ اللَّهِ، اللَّهُ أَكْبَرُ. اللَّهُمَّ إِيمَاناً بِكَ، وَتَصْدِيقاً بِكِتَابِكَ، وَوَفَاءً بِعَهْدِكَ، وَاتِّبَاعاً لِسُنَّةِ نَبِيِّكَ مُحَمَّدٍ ﷺ",
+                translation: "Dengan nama Allah, Allah Maha Besar. Ya Allah, aku beriman kepada-Mu, membenarkan kitab-Mu, memenuhi janji-Mu, dan mengikuti sunnah Nabi-Mu Muhammad ﷺ",
                 color: "#000000"
             },
             {
                 name: "Yemen Corner (Rukun Yamani)",
-                prayer: "O Allah, grant us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.",
+                prayer: "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
+                translation: "Wahai Tuhan kami, berikanlah kepada kami kebaikan di dunia dan kebaikan di akhirat, dan peliharalah kami dari azab neraka",
                 color: "#4CAF50"
             },
             {
                 name: "Shami Corner (Rukun Shami)",
-                prayer: "O Allah, forgive our sins, cover our faults, and have mercy on us. You are the Most Merciful of the merciful.",
+                prayer: "اللَّهُمَّ اغْفِرْ لَنَا ذُنُوبَنَا، وَاسْتُرْ عُيُوبَنَا، وَارْحَمْنَا، أَنْتَ أَرْحَمُ الرَّاحِمِينَ",
+                translation: "Ya Allah, ampunilah dosa-dosa kami, tutupilah keaiban kami, dan rahmatilah kami. Engkau adalah Yang Paling Penyayang di antara yang penyayang",
                 color: "#2196F3"
             },
             {
                 name: "Iraqi Corner (Rukun Iraqi)",
-                prayer: "O Allah, accept our Tawaf, our prayers, and our supplications. You are the All-Hearing, the All-Knowing.",
+                prayer: "اللَّهُمَّ تَقَبَّلْ مِنَّا طَوَافَنَا وَصَلَاتَنَا وَدُعَاءَنَا، إِنَّكَ أَنْتَ السَّمِيعُ الْعَلِيمُ",
+                translation: "Ya Allah, terimalah dari kami tawaf kami, solat kami, dan doa kami. Sesungguhnya Engkau Maha Mendengar lagi Maha Mengetahui",
                 color: "#F44336"
             }
         ];
@@ -347,10 +368,12 @@
             isPaused = false;
             
             const cornerInfo = document.getElementById('cornerInfo');
-            const prayerText = document.getElementById('prayerText');
+            const arabicText = document.getElementById('arabicText');
+            const translationText = document.getElementById('translationText');
             
             cornerInfo.textContent = '🎉 Tawaf Complete! 🎉';
-            prayerText.textContent = 'Congratulations! You have completed the 7 rounds of Tawaf.';
+            arabicText.textContent = 'مُبَارَكٌ عَلَيْكَ! لَقَدْ أَكْمَلْتَ الطَّوَافَ السَّبْعَةَ';
+            translationText.textContent = 'Tahniah! Anda telah menyelesaikan tujuh pusingan Tawaf.';
             
             updateStatus('Tawaf completed successfully!');
             
@@ -370,7 +393,8 @@
         // Update Tawaf UI
         function updateTawafUI() {
             const cornerInfo = document.getElementById('cornerInfo');
-            const prayerText = document.getElementById('prayerText');
+            const arabicText = document.getElementById('arabicText');
+            const translationText = document.getElementById('translationText');
             const roundText = document.getElementById('roundText');
             const cornerText = document.getElementById('cornerText');
             const progressFill = document.getElementById('progressFill');
@@ -381,14 +405,16 @@
             if (isTawafActive) {
                 const corner = corners[currentCorner];
                 cornerInfo.textContent = corner.name;
-                prayerText.textContent = corner.prayer;
+                arabicText.textContent = corner.prayer;
+                translationText.textContent = corner.translation;
                 
                 startBtn.style.display = 'none';
                 nextBtn.style.display = 'inline-block';
                 pauseBtn.style.display = 'inline-block';
             } else {
                 cornerInfo.textContent = 'Point camera at Kaaba to start';
-                prayerText.textContent = 'Ready to begin Tawaf training';
+                arabicText.textContent = 'Ready to begin Tawaf training';
+                translationText.textContent = 'Ready to begin Tawaf training';
                 
                 startBtn.style.display = 'inline-block';
                 nextBtn.style.display = 'none';
