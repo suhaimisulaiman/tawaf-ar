@@ -161,10 +161,10 @@
         
         /* 5. FIGURE-GROUND - Clear hierarchy */
         .main-content {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.75);
             border-radius: 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            backdrop-filter: blur(10px);
+            /* Removed backdrop-filter to prevent AR scene blocking */
         }
         
         /* 6. COMMON FATE - Elements moving together */
@@ -250,7 +250,7 @@
 </head>
 <body>
     <!-- Status -->
-    <div class="status" id="status">Loading...</div>
+    <div class="status" id="statusBar">Loading...</div>
     
     <!-- Main Menu -->
     <div id="mainMenu" class="main-content" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; text-align: center; z-index: 1000;">
@@ -290,8 +290,8 @@
         </div>
     </div>
     
-    <!-- Tawaf Training UI -->
-    <div id="tawafUI" class="main-content" style="position: fixed; top: 20px; left: 20px; right: 20px; padding: 20px; z-index: 1000; display: none;">
+            <!-- Tawaf Training UI -->
+        <div id="tawafUI" class="main-content" style="position: fixed; bottom: 20px; left: 20px; right: 20px; padding: 20px; z-index: 1000; display: none;">
         <!-- Status Bar with Visual Hierarchy -->
         <div class="info-chunk">
             <div class="primary-text" id="cornerInfo">Point camera at Kaaba to start</div>
@@ -346,7 +346,7 @@
     </div>
     
     <!-- AR Scene -->
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;">
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true;" style="z-index: 1;">
         <!-- Hiro Marker -->
         <a-marker preset="hiro" id="kaabaMarker">
             <!-- Simple Black Kaaba -->
@@ -414,7 +414,7 @@
     </a-scene>
     
     <script>
-        const status = document.getElementById('status');
+        const status = document.getElementById('statusBar');
         const mainMenu = document.getElementById('mainMenu');
         const tawafUI = document.getElementById('tawafUI');
         
@@ -913,20 +913,20 @@
         function updateMentalModel() {
             const corner = corners[currentCorner];
             const cornerInfo = document.getElementById('cornerInfo');
-            const status = document.getElementById('status');
+            const statusElement = document.getElementById('statusBar');
             
             if (isTawafActive) {
                 // Show current action needed
                 if (corner.requiresIstilam) {
                     cornerInfo.textContent = `🖐️ ${corner.name} - Perform Istilam`;
-                    status.textContent = 'Wave towards Black Stone to show respect';
+                    if (statusElement) statusElement.textContent = 'Wave towards Black Stone to show respect';
                 } else {
                     cornerInfo.textContent = `📍 ${corner.name}`;
-                    status.textContent = 'Recite the prayer and proceed to next corner';
+                    if (statusElement) statusElement.textContent = 'Recite the prayer and proceed to next corner';
                 }
             } else {
                 cornerInfo.textContent = 'Point camera at Kaaba to start';
-                status.textContent = 'Ready to begin Tawaf training';
+                if (statusElement) statusElement.textContent = 'Ready to begin Tawaf training';
             }
         }
         
