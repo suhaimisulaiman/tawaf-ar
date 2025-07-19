@@ -7,8 +7,28 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Tawaf AR Trainer - Hajj Pilgrimage Education</title>
     
-    <!-- AR.js - More reliable loading -->
+    <!-- A-Frame and AR.js Loading -->
     <script>
+        // Load A-Frame first, then AR.js
+        function loadLibraries() {
+            console.log('Loading A-Frame and AR.js...');
+            
+            // First load A-Frame
+            const aframeScript = document.createElement('script');
+            aframeScript.src = 'https://aframe.io/releases/1.4.0/aframe.min.js';
+            aframeScript.onload = function() {
+                console.log('A-Frame loaded successfully');
+                // Then load AR.js
+                loadARJS();
+            };
+            aframeScript.onerror = function() {
+                console.error('Failed to load A-Frame');
+                document.getElementById('debugInfo').textContent = 'A-Frame failed to load';
+                document.getElementById('debugInfo').style.color = '#f44336';
+            };
+            document.head.appendChild(aframeScript);
+        }
+        
         // Try to load AR.js from multiple sources
         function loadARJS() {
             const sources = [
@@ -105,12 +125,12 @@
                 });
         }
         
-        // Load AR.js when page loads
+        // Load libraries when page loads
         window.addEventListener('load', function() {
             // First check camera availability
             checkCameraStatus();
-            // Then load AR.js
-            loadARJS();
+            // Then load A-Frame and AR.js
+            loadLibraries();
         });
     </script>
     
@@ -394,6 +414,7 @@
             <button class="btn btn-secondary" onclick="showSimpleCamera()">Show Simple Camera</button>
             <button class="btn btn-secondary" onclick="debugMarkerDetection()">Debug Marker</button>
             <button class="btn btn-secondary" onclick="toggleVisualDebug()">Toggle Visual Debug</button>
+            <button class="btn btn-secondary" onclick="reloadLibraries()">Reload Libraries</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -703,6 +724,20 @@
             } else {
                 debugDiv.style.display = 'none';
             }
+        }
+        
+        function reloadLibraries() {
+            console.log('Reloading libraries...');
+            updateStatus('Reloading AR libraries...', 'status-searching');
+            
+            // Remove existing scripts
+            const existingScripts = document.querySelectorAll('script[src*="aframe"]');
+            existingScripts.forEach(script => script.remove());
+            
+            // Reload libraries
+            setTimeout(() => {
+                loadLibraries();
+            }, 1000);
         }
         
         function updateVisualDebug() {
