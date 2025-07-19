@@ -137,9 +137,7 @@
     <div class="ui-overlay">
         <div class="main-menu" id="mainMenu">
             <h1>🕋 Tawaf AR Trainer</h1>
-            <p>Point camera at hiro marker to see Kaaba</p>
-            <button class="btn" onclick="startAR()">Start AR</button>
-            <button class="btn" onclick="testMarker()">Test Marker</button>
+            <p>Point camera at hiro marker to see Kaaba and begin Tawaf training</p>
         </div>
         
         <!-- Tawaf Training UI -->
@@ -276,27 +274,6 @@
         function updateStatus(message) {
             status.textContent = message;
             console.log(message);
-        }
-        
-        // Start AR
-        function startAR() {
-            mainMenu.style.display = 'none';
-            tawafUI.style.display = 'block';
-            updateStatus('AR active - point at hiro marker');
-        }
-        
-        // Test marker detection
-        function testMarker() {
-            const marker = document.getElementById('kaabaMarker');
-            if (marker) {
-                marker.setAttribute('visible', 'true');
-                updateStatus('Test: Kaaba should be visible');
-                
-                setTimeout(() => {
-                    marker.setAttribute('visible', 'false');
-                    updateStatus('Test complete');
-                }, 3000);
-            }
         }
         
         // Start Tawaf training
@@ -478,19 +455,20 @@
         
         // Setup marker events
         document.addEventListener('DOMContentLoaded', function() {
-            updateStatus('App loaded');
+            updateStatus('App loaded - point camera at hiro marker');
             
             const marker = document.getElementById('kaabaMarker');
             if (marker) {
                 marker.addEventListener('markerFound', function() {
-                    updateStatus('🎯 Hiro marker detected!');
-                    if (!isTawafActive) {
-                        tawafUI.style.display = 'block';
-                    }
+                    updateStatus('🎯 Hiro marker detected! Tawaf training ready');
+                    mainMenu.style.display = 'none';
+                    tawafUI.style.display = 'block';
                 });
                 
                 marker.addEventListener('markerLost', function() {
                     updateStatus('Searching for hiro marker...');
+                    mainMenu.style.display = 'block';
+                    tawafUI.style.display = 'none';
                 });
             }
         });
