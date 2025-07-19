@@ -355,6 +355,7 @@
             <button class="btn btn-warning" onclick="toggleDebug()">Toggle Debug</button>
             <button class="btn btn-secondary" onclick="testImageTracking()">Test Tracking</button>
             <button class="btn btn-secondary" onclick="testCamera()">Test Camera</button>
+            <button class="btn btn-secondary" onclick="showARScene()">Show AR Scene</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -447,10 +448,11 @@
 
     <!-- A-Frame Scene (will be initialized after AR.js loads) -->
     <div id="arScene" style="display: none;">
-        <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+        <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720;">
             
-            <!-- Kaaba 3D Model - Using hiro marker for now -->
-            <a-marker preset="hiro" id="kaabaMarker">
+            <!-- Kaaba 3D Model - Multiple marker support -->
+            <!-- Hiro marker (default) -->
+            <a-marker preset="hiro" id="kaabaMarker" emitevents="true" cursor="rayOrigin: mouse">
                 <a-box position="0 0.5 0" 
                        rotation="0 0 0" 
                        width="1" 
@@ -631,14 +633,36 @@
             
             // Simulate finding a marker after 2 seconds
             setTimeout(() => {
-                updateStatus('Test: Image detected!', 'status-tracking');
+                console.log('🎯 Simulating marker detection...');
+                updateStatus('🎯 Test: Kaaba detected!', 'status-tracking');
+                
+                // Trigger marker found event manually
+                const marker = document.getElementById('kaabaMarker');
+                if (marker) {
+                    // Create and dispatch a custom marker found event
+                    const event = new CustomEvent('markerFound', { detail: { marker: marker } });
+                    marker.dispatchEvent(event);
+                }
+                
                 showTawafUI();
                 
-                // Reset after 3 seconds
+                // Reset after 5 seconds
                 setTimeout(() => {
                     updateStatus('Searching for Kaaba image...', 'status-searching');
-                }, 3000);
+                }, 5000);
             }, 2000);
+        }
+        
+        function showARScene() {
+            console.log('Manually showing AR scene...');
+            const arScene = document.getElementById('arScene');
+            if (arScene) {
+                arScene.style.display = 'block';
+                console.log('AR scene displayed');
+                updateStatus('AR scene active - point camera at hiro marker', 'status-searching');
+            } else {
+                console.error('AR scene element not found');
+            }
         }
         
         function testCamera() {
@@ -709,20 +733,54 @@
         }
         
         function setupAREvents() {
+            console.log('Setting up AR events...');
+            
             // Listen for marker detection
             const marker = document.getElementById('kaabaMarker');
             if (marker) {
+                console.log('Marker element found, adding event listeners...');
+                
                 marker.addEventListener('markerFound', function() {
-                    console.log('Marker found!');
-                    updateStatus('Tracking Kaaba', 'status-tracking');
+                    console.log('🎯 MARKER FOUND!');
+                    updateStatus('🎯 Kaaba detected!', 'status-tracking');
                     if (!isTawafActive) {
                         showTawafUI();
                     }
+                    
+                    // Add visual feedback
+                    marker.setAttribute('visible', 'true');
                 });
                 
                 marker.addEventListener('markerLost', function() {
-                    console.log('Marker lost!');
+                    console.log('❌ Marker lost!');
                     updateStatus('Searching for Kaaba image...', 'status-searching');
+                    marker.setAttribute('visible', 'false');
+                });
+                
+                // Add click event for testing
+                marker.addEventListener('click', function() {
+                    console.log('Marker clicked!');
+                    showTawafUI();
+                });
+                
+                console.log('AR event listeners added successfully');
+            } else {
+                console.error('Marker element not found!');
+            }
+            
+            // Also listen for scene events
+            const scene = document.querySelector('a-scene');
+            if (scene) {
+                scene.addEventListener('loaded', function() {
+                    console.log('A-Frame scene loaded');
+                });
+                
+                scene.addEventListener('camera-init', function() {
+                    console.log('Camera initialized');
+                });
+                
+                scene.addEventListener('camera-error', function(error) {
+                    console.error('Camera error in scene:', error);
                 });
             }
         }
