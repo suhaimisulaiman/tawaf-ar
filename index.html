@@ -349,11 +349,11 @@
             </button>
         </div>
         
-        <!-- Smart Features Info with Visual Hierarchy -->
-        <div class="info-chunk">
-            <div class="secondary-text">💡 Smart Features: Auto-pause • Swipe to advance • Camera hints • Istilam</div>
-            <div class="tertiary-text">👆 Swipe right to advance corners • 🖐️ Perform Istilam at Black Stone</div>
-        </div>
+                    <!-- Smart Features Info with Visual Hierarchy -->
+            <div class="info-chunk">
+                <div class="secondary-text">💡 Smart Features: Auto-pause • Swipe to advance • Camera hints • Istilam</div>
+                <div class="tertiary-text" id="gestureStatus">👆 Swipe right to advance corners • 🖐️ Perform Istilam at Black Stone</div>
+            </div>
     </div>
     
     <!-- AR Scene -->
@@ -494,6 +494,9 @@
                 isAutoPauseEnabled = true;
                 isGestureControlEnabled = true;
                 
+                // Setup gesture controls
+                setupGestureControls();
+                
                 // Provide initial guidance
                 setTimeout(() => {
                     provideCameraHint();
@@ -629,41 +632,66 @@
         
         // Gesture control for advancing corners
         function setupGestureControls() {
-            if (!isGestureControlEnabled) return;
+            // Remove existing event listeners to prevent duplicates
+            document.removeEventListener('touchstart', handleTouchStart);
+            document.removeEventListener('touchend', handleTouchEnd);
             
-            // Touch events for swipe gestures
-            document.addEventListener('touchstart', function(event) {
-                if (!isTawafActive || isPaused) return;
-                
-                const touch = event.touches[0];
-                touchStartX = touch.clientX;
-                touchStartY = touch.clientY;
-                lastTouchTime = Date.now();
-            });
+            // Add new event listeners
+            document.addEventListener('touchstart', handleTouchStart);
+            document.addEventListener('touchend', handleTouchEnd);
             
-            document.addEventListener('touchend', function(event) {
-                if (!isTawafActive || isPaused) return;
+            updateStatus('👆 Gesture controls enabled - Swipe right to advance corners');
+        }
+        
+        // Touch start handler
+        function handleTouchStart(event) {
+            if (!isTawafActive || isPaused || !isGestureControlEnabled) return;
+            
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            lastTouchTime = Date.now();
+            
+            console.log('Touch start:', touchStartX, touchStartY);
+        }
+        
+        // Touch end handler
+        function handleTouchEnd(event) {
+            if (!isTawafActive || isPaused || !isGestureControlEnabled) return;
+            
+            const touch = event.changedTouches[0];
+            const touchEndX = touch.clientX;
+            const touchEndY = touch.clientY;
+            const currentTime = Date.now();
+            
+            console.log('Touch end:', touchEndX, touchEndY);
+            
+            // Check if it's a quick swipe (less than 800ms)
+            if (currentTime - lastTouchTime < 800) {
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
                 
-                const touch = event.changedTouches[0];
-                const touchEndX = touch.clientX;
-                const touchEndY = touch.clientY;
-                const currentTime = Date.now();
+                console.log('Delta:', deltaX, deltaY);
                 
-                // Check if it's a quick swipe (less than 500ms)
-                if (currentTime - lastTouchTime < 500) {
-                    const deltaX = touchEndX - touchStartX;
-                    const deltaY = touchEndY - touchStartY;
-                    
-                    // Horizontal swipe (left or right)
-                    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-                        if (deltaX > 0) {
-                            // Swipe right - advance corner
-                            nextCorner();
-                            updateStatus('👆 Swipe detected: Advanced to next corner');
+                // Horizontal swipe (left or right) - more lenient threshold
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+                    if (deltaX > 0) {
+                        // Swipe right - advance corner
+                        console.log('Swipe right detected!');
+                        nextCorner();
+                        updateStatus('👆 Swipe detected: Advanced to next corner');
+                        
+                        // Update gesture status
+                        const gestureStatus = document.getElementById('gestureStatus');
+                        if (gestureStatus) {
+                            gestureStatus.textContent = '✅ Swipe successful! • 🖐️ Perform Istilam at Black Stone';
+                            setTimeout(() => {
+                                gestureStatus.textContent = '👆 Swipe right to advance corners • 🖐️ Perform Istilam at Black Stone';
+                            }, 2000);
                         }
                     }
                 }
-            });
+            }
         }
         
         // Smart corner detection based on camera angle
