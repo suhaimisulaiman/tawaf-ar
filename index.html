@@ -417,6 +417,8 @@
             <button class="btn btn-secondary" onclick="reloadLibraries()">Reload Libraries</button>
             <button class="btn btn-secondary" onclick="switchCamera()">Switch Camera</button>
             <button class="btn btn-secondary" onclick="resetCamera()">Reset Camera</button>
+            <button class="btn btn-secondary" onclick="forceMarkerDetection()">Force Marker</button>
+            <button class="btn btn-secondary" onclick="testMarkerVisibility()">Test Marker Visibility</button>
             <p style="font-size: 12px; margin-top: 20px;">
                 Point your camera at a Kaaba image to begin
             </p>
@@ -727,6 +729,77 @@
             setTimeout(() => {
                 startCamera();
             }, 500);
+        }
+        
+        function testMarkerVisibility() {
+            console.log('Testing marker visibility...');
+            
+            const marker = document.getElementById('kaabaMarker');
+            if (marker) {
+                // Make marker visible without detection
+                marker.setAttribute('visible', 'true');
+                
+                // Add a simple visible object
+                const testBox = document.createElement('a-box');
+                testBox.setAttribute('position', '0 0.5 0');
+                testBox.setAttribute('width', '1');
+                testBox.setAttribute('height', '1');
+                testBox.setAttribute('depth', '1');
+                testBox.setAttribute('color', '#FF0000');
+                testBox.setAttribute('material', 'shader: flat');
+                
+                marker.appendChild(testBox);
+                
+                console.log('Test marker made visible with red box');
+                updateStatus('Test marker visible (red box)', 'status-tracking');
+                
+                // Remove test box after 5 seconds
+                setTimeout(() => {
+                    if (testBox.parentNode) {
+                        testBox.parentNode.removeChild(testBox);
+                    }
+                    marker.setAttribute('visible', 'false');
+                    console.log('Test marker hidden');
+                }, 5000);
+            } else {
+                console.error('Marker element not found for visibility test');
+            }
+        }
+        
+        function forceMarkerDetection() {
+            console.log('Forcing marker detection...');
+            
+            const marker = document.getElementById('kaabaMarker');
+            if (marker) {
+                // Manually trigger marker found event
+                const event = new CustomEvent('markerFound', { 
+                    detail: { 
+                        marker: marker,
+                        timestamp: Date.now()
+                    } 
+                });
+                marker.dispatchEvent(event);
+                
+                // Also trigger AR.js specific event
+                const arjsEvent = new CustomEvent('arjs-marker-found', {
+                    detail: {
+                        marker: marker,
+                        timestamp: Date.now()
+                    }
+                });
+                marker.dispatchEvent(arjsEvent);
+                
+                // Set marker as visible
+                marker.setAttribute('visible', 'true');
+                
+                console.log('Forced marker detection events dispatched');
+                updateStatus('🎯 Forced marker detection!', 'status-tracking');
+                
+                // Show Tawaf UI
+                showTawafUI();
+            } else {
+                console.error('Marker element not found for forced detection');
+            }
         }
         
         function resetCamera() {
@@ -1052,6 +1125,15 @@
                     showTawafUI();
                 });
                 
+                // Add more specific AR.js events
+                marker.addEventListener('arjs-marker-found', function(event) {
+                    console.log('AR.js marker found event:', event);
+                });
+                
+                marker.addEventListener('arjs-marker-lost', function(event) {
+                    console.log('AR.js marker lost event:', event);
+                });
+                
                 console.log('AR event listeners added successfully');
             } else {
                 console.error('Marker element not found!');
@@ -1080,12 +1162,40 @@
                 scene.addEventListener('arjs-marker-found', function(event) {
                     console.log('AR.js marker found event:', event);
                 });
+                
+                // Add more comprehensive scene event listeners
+                scene.addEventListener('renderstart', function() {
+                    console.log('A-Frame render started');
+                });
+                
+                scene.addEventListener('render', function() {
+                    // Check marker visibility periodically
+                    if (marker) {
+                        const isVisible = marker.getAttribute('visible');
+                        if (isVisible && !marker.wasVisible) {
+                            console.log('🎯 Marker became visible!');
+                            marker.wasVisible = true;
+                        } else if (!isVisible && marker.wasVisible) {
+                            console.log('❌ Marker became invisible!');
+                            marker.wasVisible = false;
+                        }
+                    }
+                });
             }
             
             // Add global click handler for debugging
             document.addEventListener('click', function(event) {
                 console.log('Global click event:', event.target);
             });
+            
+            // Add periodic marker check
+            setInterval(() => {
+                if (marker) {
+                    const isVisible = marker.getAttribute('visible');
+                    const position = marker.getAttribute('position');
+                    console.log('Marker status - Visible:', isVisible, 'Position:', position);
+                }
+            }, 2000);
         }
         
         function updateStatus(text, className) {
